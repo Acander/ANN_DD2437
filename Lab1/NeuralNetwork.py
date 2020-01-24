@@ -29,19 +29,24 @@ class FeedForwardNet:
         self.loss = loss
         self.cache = []
 
+    # Ja
     def forwardPass(self, x):
         for l in self.layers:
             x = l.forward(x)
         return x
+
 
     def _backprop(self, labels):
         gradientProduct = self.loss.derivative(self.layers[-1].cachePostActivation, labels)
         for i, l in enumerate(reversed(self.layers)):
             print("\n", i)
             print("Gradient Product", gradientProduct.shape)
-            gradientProduct = np.matmul(gradientProduct, l.activation.derivative(l.cachePreActivation))
-            weightGrad = np.mean(gradientProduct * l.cacheInput, axis=0)
-            weightGrad *= self.lr
+            print("Activation grad:", l.activation.derivative(l.cachePreActivation).shape)
+            gradientProduct *= l.activation.derivative(l.cachePreActivation)
+            print("Gradient Product", gradientProduct.shape)
+            print("Cache input", l.cacheInput.shape)
+            weightGrad = gradientProduct * l.cacheInput
+            print("Weight grad", weightGrad.shape)
 
             l.weights -= weightGrad.reshape(l.weights.shape)
 
@@ -53,6 +58,9 @@ class FeedForwardNet:
 
         return self.loss.forward(y, labels)
 
+    def __str__(self):
+        return str([l.weights.shape for l in self.layers])
+
 
 np.random.seed(42)
 layers = [
@@ -61,10 +69,11 @@ layers = [
 ]
 
 myNet = FeedForwardNet(layers, Losses.MSE(), 0.001)
-inData = np.array([[1, 1], [2, 2]])
-labels = np.array([[4], [2]])
+print("Network:", myNet)
+
+inData = np.array([[1, 1]])
+labels = np.array([[4]])
 for i in range(5):
     out = myNet.forwardPass(inData)
-    print(out)
     loss = myNet.fit(inData, labels)
     print(loss)
