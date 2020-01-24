@@ -1,3 +1,4 @@
+from Lab1 import Utils
 import numpy as np
 import pylab as pb
 
