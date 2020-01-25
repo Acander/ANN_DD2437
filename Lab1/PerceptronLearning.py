@@ -1,7 +1,7 @@
 import numpy as np
 
-from Lab1.LinearSeparableData import getDecisionBoundry
-from Lab1.Utils import plotPoints, generateData, stackAndShuffleData
+from LinearSeparableData import getDecisionBoundry
+from Utils import plotPoints, generateData, stackAndShuffleData
 
 
 class PLNet:

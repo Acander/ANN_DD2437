@@ -1,4 +1,4 @@
-from Lab1 import Activations, Losses
+import Activations, Losses
 import numpy as np
 
 
@@ -46,9 +46,11 @@ class FeedForwardNet:
             gradientProduct = gradientProduct[:-1]  # In the backprop the bias is not to be included further
 
     def fit(self, x, labels, batchSize=-1):
-        if(batchSize == -1):
+        if (batchSize == -1):
             batchSize = x.shape[1]
+
         losses = []
+        preOut = self.forwardPass(x).copy()
         for i in range(0, x.shape[1], batchSize):
             batchX = x[:, i:i + batchSize]
             batchLabel = labels[:, i:i + batchSize]
@@ -57,7 +59,7 @@ class FeedForwardNet:
             self._backprop(batchLabel)
             losses.append(self.loss.forward(y, batchLabel))
 
-        return np.mean(losses)
+        return np.mean(self.loss.forward(preOut, labels))
 
     def __str__(self):
         return str([(l.weights.T.shape[0] - 1,) + l.weights.T.shape[1:] for l in self.layers])
