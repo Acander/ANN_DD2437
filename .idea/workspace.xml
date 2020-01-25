@@ -40,7 +40,29 @@
       <recent name="$PROJECT_DIR$/Lab1" />
     </key>
   </component>
-  <component name="RunManager" selected="Python.NeuralNetwork">
+  <component name="RunManager" selected="Python.Linear Separable Data">
+    <configuration name="Linear Separable Data" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ANN_DD2437" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Lab1" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Lab1/Linear Separable Data.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
     <configuration name="NeuralNetwork" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
       <module name="ANN_DD2437" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -55,6 +77,28 @@
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
       <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Lab1/NeuralNetwork.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="Test" type="PythonConfigurationType" factoryName="Python" temporary="true" nameIsGenerated="true">
+      <module name="ANN_DD2437" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/Lab1" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/Lab1/Test.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -87,6 +131,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.Linear Separable Data" />
+        <item itemvalue="Python.Test" />
         <item itemvalue="Python.NeuralNetwork" />
         <item itemvalue="Python.Utils" />
       </list>
@@ -108,7 +154,7 @@
       <workItem from="1579869033268" duration="4336000" />
       <workItem from="1579877588838" duration="7821000" />
       <workItem from="1579889036508" duration="2592000" />
-      <workItem from="1579944277774" duration="223000" />
+      <workItem from="1579944277774" duration="7692000" />
     </task>
     <servers />
   </component>
@@ -116,30 +162,34 @@
     <option name="version" value="1" />
   </component>
   <component name="WindowStateProjectService">
-    <state width="2514" height="606" key="GridCell.Tab.0.bottom" timestamp="1579895718397">
+    <state width="2514" height="318" key="GridCell.Tab.0.bottom" timestamp="1579951406032">
       <screen x="1920" y="0" width="2560" height="1440" />
     </state>
     <state width="2160" height="498" key="GridCell.Tab.0.bottom/1920.0.3440.1800@1920.0.3440.1800" timestamp="1579855195531" />
     <state width="1807" height="343" key="GridCell.Tab.0.bottom/67.27.1853.1053@67.27.1853.1053" timestamp="1579885412810" />
     <state width="2514" height="606" key="GridCell.Tab.0.bottom/67.579.1853.1053/1920.0.2560.1440@1920.0.2560.1440" timestamp="1579895718397" />
-    <state width="2514" height="606" key="GridCell.Tab.0.center" timestamp="1579895718397">
+    <state width="2514" height="318" key="GridCell.Tab.0.bottom/67.747.1853.1053/1920.0.2560.1440@1920.0.2560.1440" timestamp="1579951406032" />
+    <state width="2514" height="318" key="GridCell.Tab.0.center" timestamp="1579951406032">
       <screen x="1920" y="0" width="2560" height="1440" />
     </state>
     <state width="2160" height="498" key="GridCell.Tab.0.center/1920.0.3440.1800@1920.0.3440.1800" timestamp="1579855195530" />
     <state width="1807" height="343" key="GridCell.Tab.0.center/67.27.1853.1053@67.27.1853.1053" timestamp="1579885412810" />
     <state width="2514" height="606" key="GridCell.Tab.0.center/67.579.1853.1053/1920.0.2560.1440@1920.0.2560.1440" timestamp="1579895718397" />
-    <state width="2514" height="606" key="GridCell.Tab.0.left" timestamp="1579895718396">
+    <state width="2514" height="318" key="GridCell.Tab.0.center/67.747.1853.1053/1920.0.2560.1440@1920.0.2560.1440" timestamp="1579951406032" />
+    <state width="2514" height="318" key="GridCell.Tab.0.left" timestamp="1579951406032">
       <screen x="1920" y="0" width="2560" height="1440" />
     </state>
     <state width="2160" height="498" key="GridCell.Tab.0.left/1920.0.3440.1800@1920.0.3440.1800" timestamp="1579855195530" />
     <state width="1807" height="343" key="GridCell.Tab.0.left/67.27.1853.1053@67.27.1853.1053" timestamp="1579885412809" />
     <state width="2514" height="606" key="GridCell.Tab.0.left/67.579.1853.1053/1920.0.2560.1440@1920.0.2560.1440" timestamp="1579895718396" />
-    <state width="2514" height="606" key="GridCell.Tab.0.right" timestamp="1579895718397">
+    <state width="2514" height="318" key="GridCell.Tab.0.left/67.747.1853.1053/1920.0.2560.1440@1920.0.2560.1440" timestamp="1579951406032" />
+    <state width="2514" height="318" key="GridCell.Tab.0.right" timestamp="1579951406032">
       <screen x="1920" y="0" width="2560" height="1440" />
     </state>
     <state width="2160" height="498" key="GridCell.Tab.0.right/1920.0.3440.1800@1920.0.3440.1800" timestamp="1579855195530" />
     <state width="1807" height="343" key="GridCell.Tab.0.right/67.27.1853.1053@67.27.1853.1053" timestamp="1579885412810" />
     <state width="2514" height="606" key="GridCell.Tab.0.right/67.579.1853.1053/1920.0.2560.1440@1920.0.2560.1440" timestamp="1579895718397" />
+    <state width="2514" height="318" key="GridCell.Tab.0.right/67.747.1853.1053/1920.0.2560.1440@1920.0.2560.1440" timestamp="1579951406032" />
     <state width="1807" height="343" key="GridCell.Tab.1.bottom" timestamp="1579885412811">
       <screen x="67" y="27" width="1853" height="1053" />
     </state>
@@ -173,6 +223,8 @@
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/ANN_DD2437$NeuralNetwork.coverage" NAME="NeuralNetwork Coverage Results" MODIFIED="1579894490777" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Lab1" />
+    <SUITE FILE_PATH="coverage/ANN_DD2437$Linear_Separable_Data.coverage" NAME="Linear Separable Data Coverage Results" MODIFIED="1579951406024" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Lab1" />
     <SUITE FILE_PATH="coverage/ANN_DD2437$Utils.coverage" NAME="Utils Coverage Results" MODIFIED="1579807801522" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Lab1" />
+    <SUITE FILE_PATH="coverage/ANN_DD2437$Test.coverage" NAME="Test Coverage Results" MODIFIED="1579945562904" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/Lab1" />
   </component>
 </project>

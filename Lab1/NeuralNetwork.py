@@ -45,11 +45,19 @@ class FeedForwardNet:
             gradientProduct = np.matmul(l.weights.T, gradientProduct)
             gradientProduct = gradientProduct[:-1]  # In the backprop the bias is not to be included further
 
-    def fit(self, x, labels):
-        y = self.forwardPass(x)
-        self._backprop(labels)
-        return self.loss.forward(y, labels)
+    def fit(self, x, labels, batchSize=-1):
+        if(batchSize == -1):
+            batchSize = x.shape[1]
+        losses = []
+        for i in range(0, x.shape[1], batchSize):
+            batchX = x[:, i:i + batchSize]
+            batchLabel = labels[:, i:i + batchSize]
+
+            y = self.forwardPass(batchX)
+            self._backprop(batchLabel)
+            losses.append(self.loss.forward(y, batchLabel))
+
+        return np.mean(losses)
 
     def __str__(self):
-        return str([l.weights.T.shape for l in self.layers])
-
+        return str([(l.weights.T.shape[0] - 1,) + l.weights.T.shape[1:] for l in self.layers])
