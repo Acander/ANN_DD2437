@@ -9,10 +9,15 @@ def generateNetwork(loss=Losses.MSE(), lr=0.001):
 
 
 def getDecisionBoundry(xWeight, yWeight, bias):
+    ''' Trash formula
     xMax = bias / xWeight
     yMax = bias / yWeight
     slope = -(yMax / xMax)
     return slope, bias
+    '''
+    k = - xWeight / yWeight
+    m = -bias / yWeight
+    return k, m
 
 
 if __name__ == '__main__':

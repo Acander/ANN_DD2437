@@ -19,13 +19,6 @@ class PLNet:
 
     # Assumes labels are -1 or 1
     def fit(self, x, labels):
-        '''
-        predictions = self.predict(x)
-        falsePredictions = np.invert(np.equal(predictions, labels).astype(int))
-        # Only weights with incorrect prediction will be changed
-        # Increases weight if prediction was negative and vice versa
-        self.weights += self.lr * falsePredictions * (predictions * -1) * np.transpose(x)
-        '''
         for i in range(np.size(labels)):
             xCol = x[:, i]  # one data point is one column
             prediction = self.predict(xCol)
@@ -33,15 +26,21 @@ class PLNet:
             self.weights += self.lr * falsePrediction * (prediction * -1) * np.transpose(xCol)
 
 
-def getTrainedModel(x, y):
-    perceptron = PLNet(0.001, 2)
+def getTrainedModel(x, y, printProgress=False, plotProgress=False):
+    perceptron = PLNet(0.005, 2)
     print(perceptron.weights)
 
-    N_EPOCHS = 50
-    for i in range(N_EPOCHS):
-        if i % 5 == 0:
-            print("Accuracy:", getAccuracy(perceptron, x, y))
+    # N_EPOCHS = 10
+    acc = 0
+    while acc < 1.0:
         perceptron.fit(x, y)
+        acc = getAccuracy(perceptron, x, y)
+        if printProgress:
+            print("Accuracy:", acc)
+        if plotProgress:
+            w1, w2, b = perceptron.weights
+            s, b = getDecisionBoundry(w1, w2, b)
+            plotPoints([p1, p2], (s, b))
 
     return perceptron
 
@@ -71,13 +70,13 @@ if __name__ == "__main__":
     N_CLASS = 100
     p1, p2, x, y = generateStructureShuffleData(N_CLASS, ((1, 3), (7, 9)), (1, 1))
 
-    net = getTrainedModel(x, y)
-    getAccuracy(net, x, y)
+    net = getTrainedModel(x, y, printProgress=True, plotProgress=True)
+    # getAccuracy(net, x, y)
 
-    print(net.weights)
-    w1, w2, b = net.weights
-    print(getDecisionBoundry(w1, w2, b))
-    plotPoints([p1, p2])
-    xTest = np.array([[0, 0, 1], [8, 8, 1]]).T
-    print(net.predictRaw(xTest))
-    print(xTest)
+    # print(net.weights)
+    # w1, w2, b = net.weights
+    # s, b = getDecisionBoundry(w1, w2, b)
+    # plotPoints([p1, p2], (s, b))
+    # xTest = np.array([[0, 0, 1], [8, 8, 1]]).T
+    # print(net.predictRaw(xTest))
+    # print(xTest)
