@@ -35,10 +35,11 @@ class Sigmoid(Activation):
 
     def __init__(self):
         self.f = np.vectorize(lambda x: 1 / (1 + np.exp(-x)))
+        self.forwardCache = 0
 
     def forward(self, x):
-        return self.f(x)
+        self.forwardCache = self.f(x)
+        return self.forwardCache
 
     def derivative(self, x):
-        y = self.forward(x)
-        return y * (1 - y)
+        return self.forwardCache * (1 - self.forwardCache)
