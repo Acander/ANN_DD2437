@@ -14,7 +14,7 @@ def generateNetwork(loss=Losses.MSE(), lr=0.001):
 p1, p2, p3 = Utils.generateData(100, [[-4, -4], [0, 0], [4, 4]], ['bo', 'ro', 'bo'], [0.5, 0.5, 0.5])
 Utils.plotPoints([p1, p2, p3])
 model = generateNetwork()
-print("My model:", model)
+print("My model!:", model)
 
 inData = [np.vstack([p[0], p[1]]) for p in [p1, p2, p3]]
 labels = [np.ones((1, len(p1[0]))), np.zeros((1, len(p1[0]))), np.ones((1, len(p1[0])))]
