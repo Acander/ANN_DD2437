@@ -96,3 +96,30 @@ def plotLinearDecisionBoundry(slope, bias, min, max, color="green", label=""):
     x = np.linspace(min, max, 100)
     y = slope * x + bias
     plt.plot(x, y, '-r', color=color, label=label)
+
+def plot3DMeshgridGaussianSamples(points):
+    fig = plt.figure()
+    ax = Axes3D(fig)
+    for x, y, z, color in points:
+        X, Y, Z = np.meshgrid(x, y, z)
+        ax.plot_surface(X, Y, Z, color='red')
+
+    xMin, xMax, yMin, yMax, zMin, zMax = extractExtremeValues(points)
+
+    ax.set_xlim(xMin, xMax)
+    ax.set_ylim(yMin, yMax)
+    ax.set_zlim(zMin, zMax)
+
+    plt.show()
+
+def extractExtremeValues(points):
+    xMin = np.min(np.concatenate(([p[0] for p in points]))) - 1
+    xMax = np.max(np.concatenate(([p[0] for p in points]))) + 1
+
+    yMin = np.min(np.concatenate(([p[1] for p in points]))) - 1
+    yMax = np.max(np.concatenate(([p[1] for p in points]))) + 1
+
+    zMin = np.min(np.concatenate(([p[2] for p in points]))) - 1
+    zMax = np.max(np.concatenate(([p[2] for p in points]))) + 1
+
+    return xMin, xMax, yMin, yMax, zMin, zMax
