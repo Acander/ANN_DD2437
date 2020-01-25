@@ -20,10 +20,28 @@ def getDecisionBoundry(xWeight, yWeight, bias):
     return k, m
 
 
+def trainNetwork(model, x, y):
+    epochs = 0
+    lastLoss = 9999
+    while True:
+        epochs += 1
+        loss = model.fit(x, y, batchSize=-1)
+        # print("Loss {}:".format(epochs), loss)
+
+        if lastLoss - loss < 0.0001:
+            return epochs
+
+        lastLoss = loss
+
+
 if __name__ == '__main__':
-    p1, p2 = Utils.generateData(100, [[0, 0], [4, 4]], ['ro', 'bo'], [0.5, 0.5])
-    Utils.plotPoints([p1, p2])
-    model = generateNetwork()
+    import Lab1.PerceptronLearning
+
+    N_CLASS = 50
+    p1, p2 = Utils.generateData(N_CLASS, [[0, 0], [4, 4]], ['ro', 'bo'], [0.5, 0.5])
+    # Utils.plotPoints([p1, p2])
+    learningRate = 0.001
+    model = generateNetwork(lr=learningRate)
 
     # Formatting to match input
     x1 = np.vstack([p1[0], p1[1]])
@@ -36,8 +54,18 @@ if __name__ == '__main__':
 
     x, y = Utils.stackAndShuffleData([x1, x2], [labels1, labels2])
     print("Final data shape:", x.shape, y.shape)
-    for i in range(10000):
-        print("Loss {}:".format(i), model.fit(x, y, batchSize=-1))
 
+    # Test backprop
+    epochsBP = trainNetwork(model, x, y)
+
+    # Test perceptron learning
+    xBiasAdded = np.vstack([x, np.ones(N_CLASS * 2)])
+    yTransformed = y * 2 - 1
+    perceptron, epochsPL = Lab1.PerceptronLearning.getTrainedModel(p1, p2, xBiasAdded, yTransformed, learningRate,
+                                                                   plotProgress=False, printProgress=False)
     w1, w2, b = model.layers[0].weights[0]
-    print(getDecisionBoundry(w1, w2, b))
+    kBP, mBP = getDecisionBoundry(w1, w2, b)
+    w1, w2, b = perceptron.weights
+    kPL, mPL = getDecisionBoundry(w1, w2, b)
+    Utils.plotPoints([p1, p2], [kBP, mBP], [kPL, mPL],
+                     label1="BackPropagation, t=" + str(epochsBP), label2="PerceptronLearning, t=" + str(epochsPL))

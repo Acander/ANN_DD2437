@@ -2,13 +2,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 
-def plotPoints(points, line=None):
+def plotPoints(points, line=None, line2=None, label1="bsda", label2="asda"):
     '''
     Expects points to be a list of tuples:
         Tuple1: (xPoints, yPoints, color)
     '''
-    plt.xlabel('x', color='green')
-    plt.ylabel('y', color='green')
+    plt.xlabel('x')
+    plt.ylabel('y')
 
     for x, y, color in points:
         plt.plot(x, y, color)
@@ -19,11 +19,16 @@ def plotPoints(points, line=None):
     yMin = np.min(np.concatenate(([p[1] for p in points]))) - 1
     yMax = np.max(np.concatenate(([p[1] for p in points]))) + 1
 
-    if (line != None):
+    if line is not None:
         s, b = line
-        plotLinearDecisionBoundry(s, b, xMin-10, xMax+10)
+        plotLinearDecisionBoundry(s, b, xMin-10, xMax+10, color="green", label=label1)
+
+    if line2 is not None:
+        s, b = line2
+        plotLinearDecisionBoundry(s, b, xMin-10, xMax+10, color="purple", label=label2)
 
     setPlotDim([xMin, xMax], [yMin, yMax])
+    plt.legend()
     plt.show()
 
 
@@ -45,7 +50,7 @@ def stackAndShuffleData(inData, labels):
     inData = np.vstack([d.T for d in inData])
     labels = np.vstack([l.T for l in labels])
 
-    randomOrder = np.random.choice(range(len(inData)), len(inData))
+    randomOrder = np.random.choice(range(len(inData)), len(inData), replace=False)
     inData = np.array([inData[i] for i in randomOrder]).T
     labels = np.array([labels[i] for i in randomOrder]).T
     return inData, labels
@@ -64,7 +69,7 @@ def plotLearningCurves(metrics):
     pass
 
 
-def plotLinearDecisionBoundry(slope, bias, min, max):
+def plotLinearDecisionBoundry(slope, bias, min, max, color="green", label=""):
     x = np.linspace(min, max, 100)
     y = slope * x + bias
-    plt.plot(x, y, '-r')
+    plt.plot(x, y, '-r', color=color, label=label)

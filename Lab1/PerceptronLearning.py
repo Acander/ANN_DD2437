@@ -26,13 +26,15 @@ class PLNet:
             self.weights += self.lr * falsePrediction * (prediction * -1) * np.transpose(xCol)
 
 
-def getTrainedModel(x, y, printProgress=False, plotProgress=False):
-    perceptron = PLNet(0.005, 2)
-    print(perceptron.weights)
+def getTrainedModel(p1, p2, x, y, learningRate, printProgress=False, plotProgress=False):
+    y = y[0]
+    perceptron = PLNet(learningRate, 2)
 
     # N_EPOCHS = 10
+    epochs = 0
     acc = 0
     while acc < 1.0:
+        epochs += 1
         perceptron.fit(x, y)
         acc = getAccuracy(perceptron, x, y)
         if printProgress:
@@ -42,13 +44,13 @@ def getTrainedModel(x, y, printProgress=False, plotProgress=False):
             s, b = getDecisionBoundry(w1, w2, b)
             plotPoints([p1, p2], (s, b))
 
-    return perceptron
+    return perceptron, epochs
 
 
 def getAccuracy(model, x, y):
     predictions = model.predict(x)
     numCorrect = np.sum(np.equal(predictions, y).astype(int))
-    freqCorr = numCorrect / (N_CLASS * 2)
+    freqCorr = numCorrect / np.size(y)
     return freqCorr
 
 
@@ -63,20 +65,13 @@ def generateStructureShuffleData(n_class, centroids, stdDevs):
 
     x, y = stackAndShuffleData([x1, x2], [labels1, labels2])
     x = np.vstack([x, np.ones(N_CLASS * 2)])
-    return p1, p2, x, y[0]
+    return p1, p2, x, y
 
 
 if __name__ == "__main__":
     N_CLASS = 100
     p1, p2, x, y = generateStructureShuffleData(N_CLASS, ((1, 3), (7, 9)), (1, 1))
 
-    net = getTrainedModel(x, y, printProgress=True, plotProgress=True)
-    # getAccuracy(net, x, y)
+    net = getTrainedModel(p1, p2, x, y, 0.005, printProgress=True, plotProgress=True)
 
-    # print(net.weights)
-    # w1, w2, b = net.weights
-    # s, b = getDecisionBoundry(w1, w2, b)
-    # plotPoints([p1, p2], (s, b))
-    # xTest = np.array([[0, 0, 1], [8, 8, 1]]).T
-    # print(net.predictRaw(xTest))
-    # print(xTest)
+
