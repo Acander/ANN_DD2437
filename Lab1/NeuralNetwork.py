@@ -38,7 +38,7 @@ class FeedForwardNet:
     def _backprop(self, labels):
         gradientProduct = self.loss.derivative(self.layers[-1].cachePostActivation, labels)
         for l in reversed(self.layers):
-            gradientProduct *= l.activation.derivative(l.cachePreActivation)
+            gradientProduct = gradientProduct * l.activation.derivative(l.cachePreActivation)
             weightGrad = np.matmul(gradientProduct, l.cacheInput.T)
             l.weights -= weightGrad * self.lr
 
