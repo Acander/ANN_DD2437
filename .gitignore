@@ -1,2 +1,6 @@
 .idea/*
-Lab1/__pycache__/*
+Lab1/.idea/*
+
+Lab1/__pycache__/
+
+\.idea/

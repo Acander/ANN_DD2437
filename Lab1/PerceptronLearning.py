@@ -1,4 +1,8 @@
 import numpy as np
+from Lab1.LinearSeparableData import generateData
+
+# from Lab1.Utils import generate2DNormal, plotPoints
+from Lab1.Utils import plotPoints
 
 
 class PLNet:
@@ -27,6 +31,13 @@ class PLNet:
             self.weights += self.lr * falsePrediction * (prediction * -1) * np.transpose(xCol)
 
 
-
-
 if __name__ == "__main__":
+    p1, p2 = generateData(10, ((2, 3), (5, 5)), ('ro', 'bo'), (1, 1))
+
+    x1 = np.vstack([p1[0], p1[1]])
+    x2 = np.vstack([p2[0], p2[1]])
+
+    labels1 = np.ones((1, len(p1[0])))
+    labels2 = np.zeros((1, len(p2[0])))
+
+    plotPoints(p1)
