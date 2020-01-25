@@ -28,7 +28,7 @@ def trainNetwork(model, x, y):
         loss = model.fit(x, y, batchSize=-1)
         # print("Loss {}:".format(epochs), loss)
 
-        if lastLoss - loss < 0.0001:
+        if lastLoss - loss < 0.00001:
             return epochs
 
         lastLoss = loss
@@ -38,7 +38,7 @@ if __name__ == '__main__':
     import Lab1.PerceptronLearning
 
     N_CLASS = 50
-    p1, p2 = Utils.generateData(N_CLASS, [[0, 0], [4, 4]], ['ro', 'bo'], [0.5, 0.5])
+    p1, p2 = Utils.generateData(N_CLASS, [[3, 3], [4, 4]], ['ro', 'bo'], [1, 1])
     # Utils.plotPoints([p1, p2])
     learningRate = 0.001
     model = generateNetwork(lr=learningRate)
@@ -46,7 +46,7 @@ if __name__ == '__main__':
     # Formatting to match input
     x1 = np.vstack([p1[0], p1[1]])
     x2 = np.vstack([p2[0], p2[1]])
-    print("Traning data Shape:", x1.shape, x2.shape)
+    print("Training data Shape:", x1.shape, x2.shape)
     # Generate Labels
     labels1 = np.ones((1, len(p1[0])))
     labels2 = np.zeros((1, len(p2[0])))
@@ -61,11 +61,14 @@ if __name__ == '__main__':
     # Test perceptron learning
     xBiasAdded = np.vstack([x, np.ones(N_CLASS * 2)])
     yTransformed = y * 2 - 1
-    perceptron, epochsPL = Lab1.PerceptronLearning.getTrainedModel(p1, p2, xBiasAdded, yTransformed, learningRate,
-                                                                   plotProgress=False, printProgress=False)
+    # perceptron, epochsPL = Lab1.PerceptronLearning.getTrainedModel(p1, p2, xBiasAdded, yTransformed, learningRate,
+    #                                                                plotProgress=False, printProgress=False)
     w1, w2, b = model.layers[0].weights[0]
     kBP, mBP = getDecisionBoundry(w1, w2, b)
-    w1, w2, b = perceptron.weights
-    kPL, mPL = getDecisionBoundry(w1, w2, b)
-    Utils.plotPoints([p1, p2], [kBP, mBP], [kPL, mPL],
-                     label1="BackPropagation, t=" + str(epochsBP), label2="PerceptronLearning, t=" + str(epochsPL))
+    # w1, w2, b = perceptron.weights
+    # kPL, mPL = getDecisionBoundry(w1, w2, b)
+    # Utils.plotPoints([p1, p2], [kBP, mBP], [kPL, mPL],
+    #                 label1="BackPropagation, t=" + str(epochsBP), label2="PerceptronLearning, t=" + str(epochsPL))
+
+    Utils.plotPoints([p1, p2], [kBP, mBP],
+                     label1="BackPropagation, t=" + str(epochsBP))
