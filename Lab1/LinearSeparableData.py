@@ -8,15 +8,6 @@ def generateNetwork(loss=Losses.MSE(), lr=0.001):
     return FeedForwardNet(layers, loss, learningRate=lr)
 
 
-def generateData(pointsPerClass, centroids, colors, deviations):
-    points = []
-    for origo, color, std in zip(centroids, colors, deviations):
-        x, y = Utils.generate2DNormalInCoords(pointsPerClass, origo, std)
-        points.append((x, y, color))
-
-    return points
-
-
 def getDecisionBoundry(xWeight, yWeight, bias):
     xMax = b / xWeight
     yMax = b / yWeight
@@ -24,7 +15,7 @@ def getDecisionBoundry(xWeight, yWeight, bias):
     return slope, bias
 
 
-p1, p2 = generateData(100, [[0, 0], [4, 4]], ['ro', 'bo'], [0.5, 0.5])
+p1, p2 = Utils.generateData(100, [[0, 0], [4, 4]], ['ro', 'bo'], [0.5, 0.5])
 Utils.plotPoints([p1, p2])
 model = generateNetwork()
 
