@@ -31,5 +31,14 @@ def stackAndShuffleData(inData, labels):
     return inData, labels
 
 
+def generateData(pointsPerClass, centroids, colors, deviations):
+    points = []
+    for origo, color, std in zip(centroids, colors, deviations):
+        x, y = generate2DNormalInCoords(pointsPerClass, origo, std)
+        points.append((x, y, color))
+
+    return points
+
+
 def plotLearningCurves(metrics):
     pass
