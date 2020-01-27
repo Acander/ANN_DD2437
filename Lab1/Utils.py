@@ -1,7 +1,13 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from mpl_toolkits.mplot3d import Axes3D
+import os
 
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Removes the use of GPU
+
+from tensorflow import Variable
+from tensorflow import summary
+from tensorflow import float64
 
 def plotPoints(points, line=None, line2=None, label1="bsda", label2="asda"):
     '''
@@ -140,3 +146,13 @@ def extractExtremeValues(points):
     zMax = np.max(np.concatenate(([p[2] for p in points]))) + 1
 
     return xMin, xMax, yMin, yMax, zMin, zMax
+
+
+"""
+    :param WeightData A tensor of weight values (aka a vector)
+"""
+def weightHistogramGenerator(weightData):
+    summary.histogram("Weight data", weightData, step=None, buckets=None, description=None)
+
+weightVectors = [0.1, 0.4, 0.3, 0.2, 0.2, 0.1, 0.2, 0.4, 0.3, 0.2]
+weightHistogramGenerator(Variable(weightVectors, float64))
