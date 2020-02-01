@@ -1,5 +1,7 @@
 import numpy as np
 
+from Labb2.RBFFunc import RBF
+
 
 class RadialBasisFunctionNetwork:
 
@@ -17,12 +19,11 @@ class RadialBasisFunctionNetwork:
 
         deltaDist = inputs - self.centroids
         if (self.l1Dist == False):  # L2 dist
-            return np.dot(deltaDist, deltaDist)  # Yields squared L2 Distance.
-            '''
+            # return np.matmul(deltaDist, deltaDist.T)  # Yields squared L2 Distance.
+
             deltaDist **= 2
-            dist = np.sum(deltaDist, axis=-1)
+            return np.sum(deltaDist, axis=-1)
             # return np.sqrt(dist)
-            '''
 
         return np.sum(deltaDist, axis=-1)  # L1 Dist
 
@@ -40,6 +41,5 @@ class RadialBasisFunctionNetwork:
 
 
 if __name__ == '__main__':
-    RBF = lambda x: x
     model = RadialBasisFunctionNetwork(2, 1, 4, np.array([[0, 0], [3, 3], [1, 1], [2, 2]]), RBF, l1Dist=False)
     print(model.predict(np.array([[2, 2], [3, 7]])))
