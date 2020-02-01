@@ -33,7 +33,7 @@ def getTrainedModel(p1, p2, x, y, learningRate, printProgress=False, plotProgres
     # N_EPOCHS = 10
     epochs = 0
     acc = 0
-    while acc < 1.0:
+    while acc < 1.0 and epochs < 500:
         epochs += 1
         perceptron.fit(x, y)
         acc = getAccuracy(perceptron, x, y)

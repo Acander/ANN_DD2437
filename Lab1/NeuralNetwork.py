@@ -29,6 +29,12 @@ class FeedForwardNet:
         self.loss = loss
         self.cache = []
 
+    def predict(self, x):
+        for l in self.layers:
+            xWithBias = np.vstack([x, np.ones([1, x.shape[1]])])
+            x = l.forward(xWithBias)
+        return (x > 0.5).astype(int)
+
     def forwardPass(self, x):
         for l in self.layers:
             xWithBias = np.vstack([x, np.ones([1, x.shape[1]])])
