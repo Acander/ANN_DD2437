@@ -17,9 +17,12 @@ class RadialBasisFunctionNetwork:
 
         deltaDist = inputs - self.centroids
         if (self.l1Dist == False):  # L2 dist
+            return np.dot(deltaDist, deltaDist)  # Yields squared L2 Distance.
+            '''
             deltaDist **= 2
             dist = np.sum(deltaDist, axis=-1)
-            return np.sqrt(dist)
+            # return np.sqrt(dist)
+            '''
 
         return np.sum(deltaDist, axis=-1)  # L1 Dist
 
@@ -31,8 +34,6 @@ class RadialBasisFunctionNetwork:
         nodeScores = self._calcRBF(nodeDists)
         outputs = np.matmul(nodeScores, self.outWeights)
         return outputs
-
-
 
     def fit(self, inputs, labels):
         x = 10
