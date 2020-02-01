@@ -1,19 +1,21 @@
 from Lab1 import Utils
 import numpy as np
 import os
+import matplotlib.pyplot as plt
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Removes the use of GPU
 
 
-def generateModel(hidden):
+def generateModel(reg):
     from tensorflow.keras import Model, layers, regularizers
-    reg = 0.005
+    # reg = 0.005
     inLayer = layers.Input((5,))
-    d1 = layers.Dense(hidden, 'tanh', use_bias=True,
+    d1 = layers.Dense(8, 'tanh', use_bias=True,
                       kernel_regularizer=regularizers.l2(reg))(inLayer)
-    d2 = layers.Dense(2, 'tanh', use_bias=True,
+    d2 = layers.Dense(100, 'tanh', use_bias=True,
                       kernel_regularizer=regularizers.l2(reg))(d1)
     d3 = layers.Dense(1, 'linear', use_bias=True, kernel_regularizer=regularizers.l2(reg))(d2)
+
     return Model(inLayer, d3)
 
 
@@ -46,11 +48,25 @@ def root_mean_squared_error(y_true, y_pred):
     return K.sqrt(K.mean(K.square(y_pred - y_true)))
 
 
+def weightHistogram(model):
+    weights1, biases1 = model.layers[1].get_weights()
+    weights2, biases2 = model.layers[2].get_weights()
+    print("Shape:", weights1.shape)
+    weights = np.concatenate([weights1.flatten(), weights2.flatten()]).flatten()
+    print(weights)
+    plt.style.use('ggplot')
+    plt.hist(weights, bins=50)
+    plt.xlabel("weight value")
+    plt.ylabel("frequency")
+    plt.show()
+
+
+
 samples = np.random.randint(301, 1500, 1200).tolist()
 from Lab1 import StolenData
 
 trainSize = 400  # Training samples
-noise = 0.03  # Noise STD
+noise = 0.09  # Noise STD
 
 inData, labels = StolenData.getData(1200, 300, 4500, samples)  # generateGlassData(1200)
 print("InData:", inData.shape, " Labels:", labels.shape)
@@ -67,13 +83,18 @@ print("InTrain:", inTrain.shape, "TrainLabel:", labelTrain.shape)
 print("InEval:", inEval.shape, "EvalLabel:", labelEval.shape)
 
 results = {}
-for h in [2, 4, 6, 8]:
-    model = generateModel(h)
+import time
+tStart = time.time()
+for h in [0, 0.01]:  # , 0.0001, 0.0005, 0.001, 0.0015]:
+    model = generateModel(6)
     model.compile('adam', 'mse', metrics=[root_mean_squared_error])
 
     history = model.fit(inTrain, labelTrain, epochs=800, validation_data=[inEval, labelEval])
     loss, evalLoss = history.history['loss'][5:], history.history['val_loss'][5:]
 
     results[h] = model.evaluate(inTest, labelTest)
+    weightHistogram(model)
+
+print("Time:", time.time() - tStart)
 
 print(results)

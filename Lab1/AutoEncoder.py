@@ -6,8 +6,8 @@ import pickle
 
 def generateNetwork(loss=Losses.MSE(), lr=0.001):
     layers = [
-        DenseLayer(8, 3, Activations.ReLu()),
-        DenseLayer(3, 8, Activations.Sigmoid())
+        DenseLayer(8, 2, Activations.Linear()),
+        DenseLayer(2, 8, Activations.Sigmoid())
     ]
     return FeedForwardNet(layers, loss, learningRate=lr)
 
@@ -19,23 +19,17 @@ def generateTrainingData(numberOfPoints, size):
     return inData
 
 
-inData = generateTrainingData(400, 8)
-print("InData:", inData.shape)
-model = generateNetwork()
-for i in range(60000):
-    loss = model.fit(inData, inData, batchSize=64)
-    if (i % 100 == 0):
-        print(i, loss)
+if __name__ == '__main__':
+    inData = generateTrainingData(400, 8)
+    print("InData:", inData.shape)
+    model = generateNetwork()
+    for i in range(50000):
+        loss = model.fit(inData, inData, batchSize=64)
+        if (i % 100 == 0):
+            print(i, loss)
 
-'''
-weights = [l.weights for l in model.layers]
-with open('ModelRandomWeights.pkl', 'wb') as fp:
-    pickle.dump(weights, fp)
-'''
-
-print(model.layers[0].weights.T.shape)
-points = []
-for p in model.layers[0].weights.T:
-    points.append([[c] for c in p] + ['ro'])
-print(points)
-Utils.plot3D(points)
+    weights = [l.weights for l in model.layers]
+    with open('ModelWeights2.pkl', 'wb') as fp:
+        pickle.dump(weights, fp)
+    '''
+    '''
