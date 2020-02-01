@@ -9,8 +9,8 @@ def generateData(box=False, shuffle=True):
         r.shuffle(xTrain)
         r.shuffle(xTest)
 
-    yTrain = np.sin(xTrain)
-    yTest = np.sin(xTest)
+    yTrain = np.sin(xTrain * 2)
+    yTest = np.sin(xTest * 2)
 
     if box:
         yTrain[np.where(yTrain >= 0)] = 1
