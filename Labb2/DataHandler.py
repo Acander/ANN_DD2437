@@ -1,9 +1,6 @@
 import numpy as np
 import numpy.random as r
-
-from Labb2 import CL, RBFNet
-from Labb2.RBFFunc import RBF
-from Labb2.RBFNet import RadialBasisFunctionNetwork
+import matplotlib.pyplot as plt
 
 
 def generateData(box=False, shuffle=True, noiseVariance=0.0):
@@ -40,8 +37,15 @@ def evaluateModel(model, X, Y, residualError=True):
     return np.mean(error)
 
 
+def plotPoints(points, colors, labels, sizes=None):
+    if sizes is None:
+        sizes = [5] * len(points)
+
+    for i in range(len(points)):
+        plt.plot(points[i], np.zeros(len(points[i])), colors[i], label=labels[i], markersize=sizes[i])
+    plt.legend()
+    plt.show()
+
+
 if __name__ == '__main__':
     xTrain, yTrain, xTest, yTest = generateData(False, noiseVariance=0.0)
-    model = RadialBasisFunctionNetwork(1, 1, 4, np.random.uniform(0, 2 * np.pi, 4), RBF, l1Dist=False)
-    print(model.centroids)
-    #  CL.learnClusters(xTrain, model.centroids)
