@@ -5,12 +5,14 @@ from Labb2.RBFFunc import RBF
 
 class RadialBasisFunctionNetwork:
 
-    def __init__(self, inputSize, outSize, hiddenSize, hiddenCentroids, RBF, l1Dist=False):
+    def __init__(self, inputSize, outSize, hiddenSize, hiddenCentroids, RBF, lr=0.001, l1Dist=False):
         self.outWeights = np.random.normal(0, 0.5, (hiddenSize, outSize))
         self.centroids = hiddenCentroids
         self.numHidden = hiddenSize
         self.l1Dist = l1Dist
         self.RBF = np.vectorize(RBF)
+        self.previousHiddenValues = "CACHED FROM PREDICTION"
+        self.lr = np.array([[lr]])
         assert hiddenCentroids.shape[0] == hiddenSize and hiddenCentroids.shape[1] == inputSize
 
     def predictDist(self, inputs):
@@ -19,27 +21,47 @@ class RadialBasisFunctionNetwork:
 
         deltaDist = inputs - self.centroids
         if (self.l1Dist == False):  # L2 dist
-            # return np.matmul(deltaDist, deltaDist.T)  # Yields squared L2 Distance.
-
             deltaDist **= 2
             return np.sum(deltaDist, axis=-1)
-            # return np.sqrt(dist)
 
         return np.sum(deltaDist, axis=-1)  # L1 Dist
 
-    def _calcRBF(self, distances):
-        return self.RBF(distances)
-
     def predict(self, inputs):
         nodeDists = self.predictDist(inputs)
-        nodeScores = self._calcRBF(nodeDists)
-        outputs = np.matmul(nodeScores, self.outWeights)
-        return outputs
+        # print(nodeDists)
+        self.previousHiddenValues = self.RBF(nodeDists)
+        # print(self.previousHiddenValues)
+        return np.matmul(self.previousHiddenValues, self.outWeights)
 
     def fit(self, inputs, labels):
-        x = 10
+        pred = self.predict(inputs)
+        # print("Pred\n", pred)
+        # print((pred - labels)**2)
+        loss = (pred - labels) ** 2  # Allows for batch
+        # print("Loss\n", loss, loss.shape)
+        # loss = loss.reshape(loss.shape + (1,))
+        #print(loss, loss.shape)
+        self.previousHiddenValues = self.previousHiddenValues
+
+        #print("Previous:", self.previousHiddenValues, self.previousHiddenValues.shape)
+        # self.previousHiddenValues = self.previousHiddenValues.reshape(1, self.previousHiddenValues.shape[0])
+        weightGrad = loss * self.previousHiddenValues
+        weightGrad = np.mean(weightGrad, axis=0)  # Batch Grad mean
+        weightGrad = weightGrad.reshape(weightGrad.shape + (1,))  # Reshape for broadcast
+        #print("Grad:", weightGrad, weightGrad.shape)
+        #print("Weights:", self.outWeights, self.outWeights.shape)
+        #print(self.lr, self.lr.shape)
+        self.outWeights += self.lr * weightGrad
+
+        return np.mean(loss)
 
 
 if __name__ == '__main__':
     model = RadialBasisFunctionNetwork(2, 1, 4, np.array([[0, 0], [3, 3], [1, 1], [2, 2]]), RBF, l1Dist=False)
-    print(model.predict(np.array([[2, 2], [3, 7]])))
+    # print(model.predict(np.array([[2, 2], [3, 7]])))
+    inData = np.array([[2, 2]])
+    labels = np.array([[1]])
+    for i in range(100000):
+        loss = model.fit(inData, labels)
+        print(loss)
+        # print("Predict", model.predict(inData))
