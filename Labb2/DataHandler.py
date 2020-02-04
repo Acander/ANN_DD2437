@@ -1,6 +1,10 @@
 import numpy as np
 import numpy.random as r
 
+from Labb2 import CL, RBFNet
+from Labb2.RBFFunc import RBF
+from Labb2.RBFNet import RadialBasisFunctionNetwork
+
 
 def generateData(box=False, shuffle=True, noiseVariance=0.0):
     xTrain = np.arange(0, 2 * np.pi, 0.1)
@@ -37,4 +41,7 @@ def evaluateModel(model, X, Y, residualError=True):
 
 
 if __name__ == '__main__':
-    print(generateData(False, noiseVariance=0.0))
+    xTrain, yTrain, xTest, yTest = generateData(False, noiseVariance=0.0)
+    model = RadialBasisFunctionNetwork(1, 1, 4, np.random.uniform(0, 2 * np.pi, 4), RBF, l1Dist=False)
+    print(model.centroids)
+    #  CL.learnClusters(xTrain, model.centroids)
