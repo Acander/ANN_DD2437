@@ -2,7 +2,7 @@ import numpy as np
 import numpy.random as r
 
 
-def generateData(box=False, shuffle=True):
+def generateData(box=False, shuffle=True, noiseVariance=0.0):
     xTrain = np.arange(0, 2 * np.pi, 0.1)
     xTest = np.arange(0.05, 2 * np.pi, 0.1)
     if shuffle:
@@ -17,6 +17,10 @@ def generateData(box=False, shuffle=True):
         yTrain[np.where(yTrain < 0)] = -1
         yTest[np.where(yTest >= 0)] = 1
         yTest[np.where(yTest < 0)] = -1
+
+    if noiseVariance > 0:
+        yTrain += np.random.normal(0, np.sqrt(noiseVariance), len(xTrain))
+        yTest += np.random.normal(0, np.sqrt(noiseVariance), len(xTest))
 
     N = len(xTrain)
 
@@ -33,4 +37,4 @@ def evaluateModel(model, X, Y, residualError=True):
 
 
 if __name__ == '__main__':
-    print(generateData(True))
+    print(generateData(False, noiseVariance=0.0))

@@ -5,6 +5,10 @@ Lab1/__pycache__/
 
 \.idea/
 
+<<<<<<< HEAD
 Labb2/__pycache__/__init__.cpython-36.pyc
 
 Labb2/__pycache__/RBFFunc.cpython-36.pyc
+=======
+Labb2/__pycache__/
+>>>>>>> master
