@@ -37,12 +37,15 @@ def evaluateModel(model, X, Y, residualError=True):
     return np.mean(error)
 
 
-def plotPoints(points, colors, labels, sizes=None):
+def plotPoints(points, colors, labels, sizes=None, twoD=False):
     if sizes is None:
         sizes = [5] * len(points)
 
     for i in range(len(points)):
-        plt.plot(points[i], np.zeros(len(points[i])), colors[i], label=labels[i], markersize=sizes[i])
+        if not twoD:
+            plt.plot(points[i], np.zeros(len(points[i])), colors[i], label=labels[i], markersize=sizes[i])
+        else:
+            plt.plot(points[i], colors[i], label=labels[i], markersize=sizes[i])
     plt.legend()
     plt.show()
 
