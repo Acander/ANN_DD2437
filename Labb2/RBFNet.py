@@ -5,7 +5,7 @@ from Labb2.RBFFunc import RBF
 
 class RadialBasisFunctionNetwork:
 
-    def __init__(self, inputSize, outSize, hiddenSize, hiddenCentroids, RBF, lr=0.0001, l1Dist=False):
+    def __init__(self, inputSize, outSize, hiddenSize, hiddenCentroids, RBF, lr=0.0005, l1Dist=False):
         self.outWeights = np.random.normal(0, 0.5, (hiddenSize, outSize))
         self.centroids = hiddenCentroids
         self.numHidden = hiddenSize
@@ -35,30 +35,26 @@ class RadialBasisFunctionNetwork:
 
     def fit(self, inputs, labels):
         pred = self.predict(inputs)
+        loss = (pred - labels)  # Allows for batch
+        #print("Previous:", self.previousHiddenValues, self.previousHiddenValues.shape)
         for i in range(pred.shape[1]):
-            # print(pred.shape, labels.shape)
-            # print("Pred\n", pred)
-            # print((pred - labels)**2)
-            loss = (pred - labels) ** 2  # Allows for batch
-            # print("Loss\n", loss, loss.shape)
-            # loss = loss.reshape(loss.shape + (1,))
-            # print(loss, loss.shape)
-            self.previousHiddenValues = self.previousHiddenValues
+            outputLoss = loss[:, i].reshape((loss.shape[0], 1))
+            #print("Loss {}\n".format(i), outputLoss, outputLoss.shape)
 
-            # print("Previous:", self.previousHiddenValues, self.previousHiddenValues.shape)
             # self.previousHiddenValues = self.previousHiddenValues.reshape(1, self.previousHiddenValues.shape[0])
-            weightGrad = loss[:, i].reshape((loss.shape[0], 1)) * self.previousHiddenValues
-            # print("Grad:", weightGrad, weightGrad.shape)
+            weightGrad = outputLoss * self.previousHiddenValues
+
+            #print("Grad:", weightGrad, weightGrad.shape)
             weightGrad = np.mean(weightGrad, axis=0)  # Batch Grad mean
             weightGrad = weightGrad.reshape(weightGrad.shape + (1,))  # Reshape for broadcast
             # print("Weights:", self.outWeights, self.outWeights.shape)
             # print("Grad:", weightGrad, weightGrad.shape)
             # print(self.lr, self.lr.shape)
             # print((self.lr * weightGrad).shape)
-            self.outWeights[:, i] += self.lr * weightGrad[:, 0]
+            self.outWeights[:, i] -= self.lr * weightGrad[:, 0]
 
             # input()
-        return np.mean(loss)
+        return np.mean(np.abs(pred - labels))
 
 
 if __name__ == '__main__':
@@ -71,7 +67,7 @@ if __name__ == '__main__':
     # [(points), () ]
     inData = np.array([[2, 2], [0, 0], [3, 3]])
     labels = np.array([[1, 3], [-1, 1], [5, 5]])
-    for i in range(100000):
+    for i in range(1000000):
         loss = model.fit(inData, labels)
         print(loss)
         #print("Predict", model.predict(inData))
