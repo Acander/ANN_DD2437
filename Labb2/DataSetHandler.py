@@ -24,7 +24,7 @@ def importTrainingBallisticData():
         trainingDataset.append((input, output))
         # print(input, output)
 
-    return np.array(trainingDataset)
+    return np.array(trainingDataset) #Returns an array with a tuple containing 2 elements:  1) input tuple 2) output tuple (see instructions)
 
 
 def importTestBallisticData():
@@ -39,16 +39,14 @@ def importTestBallisticData():
         testDataset.append(input)
         # print(input, output)
 
-    return np.array(testDataset)
+    return np.array(testDataset) #Returns an array with a input tuples
 
 
 if __name__ == '__main__':
     print("TRAIN")
-    print(importTrainingBallisticData()[0][4][1])
+    print(importTrainingBallisticData()[4])
     print("TEST")
-    print(importTestBallisticData()[10][])
-
-    print(imp)
+    print(importTestBallisticData()[10])
 
     # a, b = importAnimalDataSet()
     # print(b)
