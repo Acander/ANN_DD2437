@@ -1,4 +1,5 @@
 import numpy as np
+import string
 
 
 def importAnimalDataSet():
@@ -41,15 +42,28 @@ def importTestBallisticData():
 
     return np.array(testDataset) #Returns an array with a input tuples
 
+def importCities():
+    attributesString = open("data_lab2/cities.dat", 'r').read()
+    list = [element.strip("\n") for element in attributesString.split(";")]
+    list.pop()
+    print(list)
+    list = [tuple(map(float, t.split(","))) for t in list]
+    print(list)
+
+    return list
+
+#TODO def importVotes():
 
 if __name__ == '__main__':
-    print("TRAIN")
+    """print("TRAIN")
     print(importTrainingBallisticData()[4])
     print("TEST")
-    print(importTestBallisticData()[10])
+    print(importTestBallisticData()[10])"""
 
     # a, b = importAnimalDataSet()
     # print(b)
 
     # print(trainingDataSet)
     # print(trainingDataSet[0][0][0])
+
+    #importCities()
