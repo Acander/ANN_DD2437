@@ -1,7 +1,7 @@
 import numpy as np
 
 from Labb2.CL import closestCentroid
-from Labb2.DataSetHandler import importDataSeta
+from Labb2.DataSetHandler import importAnimalDataSet
 
 STEP_SIZE = 0.2
 SIGMA0 = 1
@@ -53,7 +53,8 @@ def SOM1d(X, inSize, outSize, epochs=20):
 
 
 if __name__ == '__main__':
-    X, animalNames = importDataSeta()
+    X, animalNames = importAnimalDataSet()
+    animalNames = [animal.strip("\t\'") for animal in animalNames]
     # SOM1d(np.random.normal(1, 1, (32, 84)), 84, 100)
     similaritySequence = SOM1d(X, 84, 100, epochs=20)
     animalsOrdered = [animalNames[animal[0]] for animal in similaritySequence]
