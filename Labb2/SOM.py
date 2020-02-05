@@ -8,11 +8,19 @@ SIGMA0 = 1
 TAU = 100
 
 
-def distToWinner(winner, nodes):
+def distToWinnerChain(winner, nodes):
     # distances = []
     # for i in range(len(nodes)):
     #     distances.append(np.abs(winner - i))
     return np.abs(winner - np.arange(len(nodes)))
+
+
+def distToWinnerCircular(winner, nodes):
+    n = len(nodes)
+    indices = np.arange(n)
+    return np.min(
+        np.abs(winner - indices),
+        n - indices + 1 + winner)
 
 
 def neighbFunc(sigma, dist):
@@ -27,7 +35,7 @@ def meanLength(W):
     return np.mean(np.linalg.norm(W, axis=1))
 
 
-def SOM1d(X, inSize, outSize, epochs=20):
+def SOM(X, inSize, outSize, epochs=20, distFunc=distToWinnerChain):
     numCategories = len(X)
     W = np.random.uniform(0, 1, (outSize, inSize))  # These are the nodes, each row defines a centroid
 
@@ -35,7 +43,7 @@ def SOM1d(X, inSize, outSize, epochs=20):
         sigma = SIGMA0 * np.exp(-(t * t) / TAU)
         for i in range(numCategories):
             winner = closestCentroid(X[i], W)
-            distances = distToWinner(winner, W)
+            distances = distFunc(winner, W)
             h = neighbFunc(sigma, distances)
             # print(np.shape(h))
             # print(np.shape(X[i]))
@@ -45,17 +53,26 @@ def SOM1d(X, inSize, outSize, epochs=20):
                 # print(np.linalg.norm(X[i] - W[wIdx]))
                 W[wIdx] += STEP_SIZE * h[wIdx] * (X[i] - W[wIdx])
 
-    print(meanLength(W))
+    # print(meanLength(W))
     winners = []
     for i in range(numCategories):
         winners.append((i, closestCentroid(X[i], W)))
     return sorted(winners, key=lambda x: x[1])
 
 
-if __name__ == '__main__':
+def somAnimals():
     X, animalNames = importAnimalDataSet()
-    animalNames = [animal.strip("\t\'") for animal in animalNames]
-    # SOM1d(np.random.normal(1, 1, (32, 84)), 84, 100)
-    similaritySequence = SOM1d(X, 84, 100, epochs=20)
+    similaritySequence = SOM(X, 84, 100, epochs=100, distFunc=distToWinnerChain)
     animalsOrdered = [animalNames[animal[0]] for animal in similaritySequence]
     print(animalsOrdered)
+
+
+def somCyclicTour():
+    X = np.array([np.array([i, i ** 2]) for i in range(10)])
+    similaritySequence = SOM(X, 2, 10, epochs=20, distFunc=distToWinnerCircular)
+    print(similaritySequence)
+
+
+if __name__ == '__main__':
+    somCyclicTour()
+    # somAnimals()
