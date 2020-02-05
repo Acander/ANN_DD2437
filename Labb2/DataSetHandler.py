@@ -7,8 +7,7 @@ def importAnimalDataSet():
     attributesString = open("data_lab2/animals.dat", 'r').read()
     attributeArray = np.array(list(map(int, attributesString.split(","))))
     attributeArray = attributeArray.reshape((32, 84))
-
-    return attributeArray, names
+    return attributeArray, [animal.strip("\t\'") for animal in names]
 
 def importBallisticDataSet():
     attributesString = open("data_lab2/ballist.dat", 'r').read()
@@ -55,6 +54,8 @@ def importTestBallisticData():
     return np.array(trainingDataset)
 
 trainingDataSet = importBallisticDataSet()
+a, b = importAnimalDataSet()
+print(b)
 
 #print(trainingDataSet)
 #print(trainingDataSet[0][0][0])
