@@ -69,6 +69,7 @@ def somAnimals():
 
 def somCyclicTour():
     X = np.array([np.array([i, i ** 2]) for i in range(10)])
+    print(X)
     similaritySequence = SOM(X, 2, 10, epochs=20, distFunc=distToWinnerCircular)
     print(similaritySequence)
 
