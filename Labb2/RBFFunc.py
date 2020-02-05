@@ -1,6 +1,6 @@
 import numpy as np
 
-SIGMA = 0.4
+SIGMA = 0.5
 SIGMA22 = 2 * SIGMA * SIGMA
 
 

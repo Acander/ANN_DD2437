@@ -36,15 +36,15 @@ class RadialBasisFunctionNetwork:
     def fit(self, inputs, labels):
         pred = self.predict(inputs)
         loss = (pred - labels)  # Allows for batch
-        #print("Previous:", self.previousHiddenValues, self.previousHiddenValues.shape)
+        # print("Previous:", self.previousHiddenValues, self.previousHiddenValues.shape)
         for i in range(pred.shape[1]):
             outputLoss = loss[:, i].reshape((loss.shape[0], 1))
-            #print("Loss {}\n".format(i), outputLoss, outputLoss.shape)
+            # print("Loss {}\n".format(i), outputLoss, outputLoss.shape)
 
             # self.previousHiddenValues = self.previousHiddenValues.reshape(1, self.previousHiddenValues.shape[0])
             weightGrad = outputLoss * self.previousHiddenValues
 
-            #print("Grad:", weightGrad, weightGrad.shape)
+            # print("Grad:", weightGrad, weightGrad.shape)
             weightGrad = np.mean(weightGrad, axis=0)  # Batch Grad mean
             weightGrad = weightGrad.reshape(weightGrad.shape + (1,))  # Reshape for broadcast
             # print("Weights:", self.outWeights, self.outWeights.shape)
@@ -54,6 +54,27 @@ class RadialBasisFunctionNetwork:
             self.outWeights[:, i] -= self.lr * weightGrad[:, 0]
 
             # input()
+        return np.mean((pred - labels))
+
+    def fit2(self, inputs, labels):
+        pred = self.predict(inputs)
+        loss = (labels - pred)
+
+        weightGrads = [[] for i in range(self.outWeights.shape[0])]
+        #print(pred.shape, loss.shape)
+        for i in range(pred.shape[1]):  # Iterate over outputs
+            outputLoss = loss[:, i]
+
+            for j, l in enumerate(outputLoss):  # Iterate over samples in batch
+                prevValues = self.previousHiddenValues[j]
+                #print("OutLoss:", outputLoss.shape, "PrevValues:", prevValues.shape)
+                for k, w in enumerate(self.outWeights):
+                    wGrad = l * prevValues[k]
+                    weightGrads[k].append(wGrad)
+
+        for i, wGrad in enumerate(weightGrads):
+            self.outWeights[i] += self.lr * np.mean(wGrad)
+
         return np.mean(np.abs(pred - labels))
 
 
@@ -70,4 +91,4 @@ if __name__ == '__main__':
     for i in range(1000000):
         loss = model.fit(inData, labels)
         print(loss)
-        #print("Predict", model.predict(inData))
+        # print("Predict", model.predict(inData))
