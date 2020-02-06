@@ -2,10 +2,11 @@ import numpy as np
 
 from Labb2.CL import closestCentroid
 from Labb2.DataHandler import plotPointsXY
-from Labb2.DataSetHandler import importAnimalDataSet
+from Labb2.DataSetHandler import importAnimalDataSet, importCities
 
 STEP_SIZE = 0.2
-SIGMA0 = 1
+# SIGMA0 = 1
+SIGMA0 = 3
 TAU = 100
 
 
@@ -23,15 +24,6 @@ def distToWinnerCircular(winner, nodes):
     # print(nodes)
     vec1 = np.abs(winner - indices)
     vec2 = np.array(n - indices + 1 + winner)
-    '''
-    print("vec1:", vec1)
-    print("vec2:", vec2)
-    print(len(vec1))
-    print(len(vec2))
-    print(vec1[0])
-    print(vec2[0])
-    print(min(vec1[0], vec2[0]))
-    '''
     return np.array([min(vec1[i], vec2[i]) for i in range(len(vec1))])
     # return np.min(
     #     np.abs(winner - indices),
@@ -56,12 +48,7 @@ def SOM(X, inSize, outSize, epochs=20, distFunc=distToWinnerChain, sort=True):
             winner = closestCentroid(X[i], W)
             distances = distFunc(winner, W)
             h = neighbFunc(sigma, distances)
-            # print(np.shape(h))
-            # print(np.shape(X[i]))
             for wIdx in range(len(W)):
-                # print(np.shape(W[wIdx]))
-                # print(np.shape(X[i] - W[wIdx]))
-                # print(np.linalg.norm(X[i] - W[wIdx]))
                 W[wIdx] += STEP_SIZE * h[wIdx] * (X[i] - W[wIdx])
 
     # print(meanLength(W))
@@ -79,17 +66,30 @@ def somAnimals():
 
 
 def somCyclicTour():
+    '''
     X = np.random.uniform(0.0, 1.0, (10, 2))
-    print(X)
-    similaritySequence = SOM(X, 2, 10, epochs=20, distFunc=distToWinnerCircular, sort=False)
-    print(similaritySequence)
+    X = [[0.36774487, 0.97798252],
+         [0.7865123, 0.26115321],
+         [0.13692526, 0.87530038],
+         [0.41689718, 0.02890185],
+         [0.95716118, 0.61338133],
+         [0.00175163, 0.03152998],
+         [0.044273, 0.9803899],
+         [0.76049118, 0.09521741],
+         [0.22803144, 0.98443609],
+         [0.794949, 0.50350659]]
+    '''
+    X = importCities()
+    np.random.shuffle(X)
+    similaritySequence = SOM(X, 2, 10, epochs=50, distFunc=distToWinnerCircular, sort=True)
+    # print(similaritySequence)
     xPlot = [X[i][0] for i, winner in similaritySequence]
     yPlot = [X[i][1] for i, winner in similaritySequence]
-    xPlot.append(X[0][0])
-    yPlot.append(X[1][0])
-    # end not included? no cycle in plot
-    print([(xPlot, yPlot)])
-    plotPointsXY([(xPlot, yPlot)], ["lol"], True)
+    firstIdx = similaritySequence[0][0]
+    # Include first point again, to show the cycle
+    xPlot.append(X[firstIdx][0])
+    yPlot.append(X[firstIdx][1])
+    plotPointsXY([(xPlot, yPlot)], ["Route"], True)
 
 
 if __name__ == '__main__':

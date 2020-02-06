@@ -39,11 +39,10 @@ def evaluateModel(model, X, Y, residualError=True):
 
 def plotPointsXY(pointsList, labels, drawPoints=False):
     for i, points in enumerate(pointsList):
-        print(points)
         x, y = points
         plt.plot(x, y, label=labels[i])
         if drawPoints:
-            plt.plot(x, y, "go")
+            plt.plot(x, y, "bo")
     plt.legend()
     plt.show()
 
