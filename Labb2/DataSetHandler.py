@@ -53,7 +53,85 @@ def importCities():
     return list  # Returns a list (numpy array) of tuples containing coordinates
 
 
-# TODO def importVotes():
+def importVotesAndMPs():
+    numMPs = 349
+
+    # Import the 31 votes for each mp
+    voteData = open("data_lab2/votes.dat", 'r').read()
+    votes = np.reshape(list(map(float, voteData.split(","))), (349, 31))
+
+    '''Import party:
+    Coding: 0 = no party, 1 = 'm', 2 = 'fp', 3 = 's', 4 = 'v', 5 = 'mp', 6 = 'kd', 7 = 'c'
+    Use some color scheme for these different groups
+    Import sex and district:
+    '''
+    partyData = open("data_lab2/mpparty.dat", 'r').read().split("\n")
+    partyData.pop()
+    partyMp = [int(party.strip("\t ")) for party in partyData]
+
+    # Import sex (Coding: Male 0, Female 1):
+    mpSexData = open("data_lab2/mpsex.dat", 'r').read().split("\n")
+    mpSexData.pop()
+    mpSex = [int(mpSex.strip("\t ")) for mpSex in mpSexData]
+
+    # Import district:
+    mpDistrictData = open("data_lab2/mpdistrict.dat", 'r').read().split("\n")
+    mpDistrictData.pop()
+    mpDistrict = [int(mpDistrict.strip("\t ")) for mpDistrict in mpDistrictData]
+
+    # Import names:
+    mpNameData = open("data_lab2/mpnames.txt", 'r').read().split("\n")
+
+    FinalMPInfoList = []
+    for mp in range(numMPs):
+        color, letter = colorAndLetterScheme(partyMp[mp])
+        sex = parseSex(mpSex[mp])
+        FinalMPInfoList.append((mpNameData[mp], sex, mpDistrict[mp], (partyMp[mp], letter, color)))
+
+    return votes, FinalMPInfoList
+
+    # Votes: 349X31 matrix with votes for each mp
+    # FinalMPInfoList: List of tuples containing mp info
+    # 1) Name 2) Sex 3) District 4) Tuple containing party
+    # (along with name and color for that party)
+
+
+def parseSex(sex):
+    if sex == 0:
+        return "Male"
+    else:
+        return "Female"
+
+
+def colorAndLetterScheme(party):
+    color = ""
+    letter = ""
+    if party == 1:
+        color = "blue"
+        letter = "m"
+    elif party == 2:
+        color = "aqua"
+        letter = "fp"
+    elif party == 3:
+        color = "red"
+        letter = "s"
+    elif party == 4:
+        color = "purple"
+        letter = "v"
+    elif party == 5:
+        color = "green"
+        letter = "mp"
+    elif party == 6:
+        color = "Teal"
+        letter = "kd"
+    elif party == 7:
+        color = "Lime"
+        letter = "c"
+    else:
+        color = "white"
+        letter = "no party"
+    return color, letter
+
 
 if __name__ == '__main__':
     """print("TRAIN")
@@ -67,4 +145,8 @@ if __name__ == '__main__':
     # print(trainingDataSet)
     # print(trainingDataSet[0][0][0])
 
-    importCities()
+    # importCities()
+    votes, mpInfoList = importVotesAndMPs()
+    # print(mpInfoList[3])
+    print(votes[5])
+    print(mpInfoList[5])
