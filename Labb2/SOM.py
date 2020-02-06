@@ -55,12 +55,12 @@ def SOM(X, inSize, outSize, epochs=20, distFunc=distToWinnerChain, sort=True):
     winners = []
     for i in range(numCategories):
         winners.append((i, closestCentroid(X[i], W)))
-    return sorted(winners, key=lambda x: x[1]) if sort else winners
+    return W, sorted(winners, key=lambda x: x[1]) if sort else winners
 
 
 def somAnimals():
     X, animalNames = importAnimalDataSet()
-    similaritySequence = SOM(X, 84, 100, epochs=100, distFunc=distToWinnerChain)
+    W, similaritySequence = SOM(X, 84, 100, epochs=100, distFunc=distToWinnerChain)
     animalsOrdered = [animalNames[animal[0]] for animal in similaritySequence]
     print(animalsOrdered)
 
@@ -81,7 +81,7 @@ def somCyclicTour():
     '''
     X = importCities()
     np.random.shuffle(X)
-    similaritySequence = SOM(X, 2, 10, epochs=50, distFunc=distToWinnerCircular, sort=True)
+    W, similaritySequence = SOM(X, 2, 10, epochs=100, distFunc=distToWinnerCircular, sort=True)
     # print(similaritySequence)
     xPlot = [X[i][0] for i, winner in similaritySequence]
     yPlot = [X[i][1] for i, winner in similaritySequence]
@@ -89,7 +89,14 @@ def somCyclicTour():
     # Include first point again, to show the cycle
     xPlot.append(X[firstIdx][0])
     yPlot.append(X[firstIdx][1])
-    plotPointsXY([(xPlot, yPlot)], ["Route"], True)
+
+    weightsX = W[:, 0]
+    weightsY = W[:, 1]
+    weightsX = np.concatenate((weightsX, [W[0][0]]))
+    weightsY = np.concatenate((weightsY, [W[0][1]]))
+    plotPointsXY([(xPlot, yPlot), (weightsX, weightsY)], ["OrderedCitiesSOM", "Weights SOM"], True)
+
+    # plotPointsXY([(weightsX, weightsY)], ["Route"], True)
 
 
 if __name__ == '__main__':

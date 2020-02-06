@@ -42,7 +42,7 @@ def plotPointsXY(pointsList, labels, drawPoints=False):
         x, y = points
         plt.plot(x, y, label=labels[i])
         if drawPoints:
-            plt.plot(x, y, "bo")
+            plt.plot(x, y, "bo" if i == 0 else "ro")
     plt.legend()
     plt.show()
 
