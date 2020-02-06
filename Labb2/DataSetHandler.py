@@ -1,4 +1,5 @@
 import numpy as np
+import string
 
 
 def importAnimalDataSet():
@@ -24,7 +25,8 @@ def importTrainingBallisticData():
         trainingDataset.append((input, output))
         # print(input, output)
 
-    return np.array(trainingDataset) #Returns an array with a tuple containing 2 elements:  1) input tuple 2) output tuple (see instructions)
+    return np.array(
+        trainingDataset)  # Returns an array with a tuple containing 2 elements:  1) input tuple 2) output tuple (see instructions)
 
 
 def importTestBallisticData():
@@ -39,17 +41,30 @@ def importTestBallisticData():
         testDataset.append(input)
         # print(input, output)
 
-    return np.array(testDataset) #Returns an array with a input tuples
+    return np.array(testDataset)  # Returns an array with a input tuples
 
+
+def importCities():
+    attributesString = open("data_lab2/cities.dat", 'r').read()
+    list = [element.strip("\n") for element in attributesString.split(";")]
+    list.pop()
+    list = np.array([tuple(map(float, t.split(","))) for t in list])
+
+    return list  # Returns a list (numpy array) of tuples containing coordinates
+
+
+# TODO def importVotes():
 
 if __name__ == '__main__':
-    print("TRAIN")
+    """print("TRAIN")
     print(importTrainingBallisticData()[4])
     print("TEST")
-    print(importTestBallisticData()[10])
+    print(importTestBallisticData()[10])"""
 
     # a, b = importAnimalDataSet()
     # print(b)
 
     # print(trainingDataSet)
     # print(trainingDataSet[0][0][0])
+
+    importCities()
