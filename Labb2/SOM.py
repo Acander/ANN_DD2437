@@ -2,32 +2,41 @@ import numpy as np
 
 from Labb2.CL import closestCentroid
 from Labb2.DataHandler import plotPointsXY
-from Labb2.DataSetHandler import importAnimalDataSet, importCities
+from Labb2.DataSetHandler import importAnimalDataSet, importCities, importVotesAndMPs
 
 STEP_SIZE = 0.2
 # SIGMA0 = 1
-SIGMA0 = 3
-TAU = 100
+SIGMA0 = 500
+TAU = 500
 
 
 def distToWinnerChain(winner, nodes):
-    # distances = []
-    # for i in range(len(nodes)):
-    #     distances.append(np.abs(winner - i))
     return np.abs(winner - np.arange(len(nodes)))
 
 
 def distToWinnerCircular(winner, nodes):
     n = len(nodes)
     indices = np.arange(n)
-    # print(winner)
-    # print(nodes)
     vec1 = np.abs(winner - indices)
     vec2 = np.array(n - indices + 1 + winner)
     return np.array([min(vec1[i], vec2[i]) for i in range(len(vec1))])
-    # return np.min(
-    #     np.abs(winner - indices),
-    #     n - indices + 1 + winner)
+
+
+def distToWinner2DGrid(winner, nodes):
+    numNodes = len(nodes)
+    n = int(np.sqrt(numNodes))
+    winnerY = int(winner / n)
+    winnerX = winner % n
+    # print(winnerY, winnerX)
+    # grid = np.reshape(nodes, (n, n, 2))
+
+    distances = []
+    for i in range(numNodes):
+        currY = int(i / n)
+        currX = i % n
+        distances.append(np.abs(currY - winnerY) + np.abs(currX - winnerX))
+
+    return np.array(distances)
 
 
 def neighbFunc(sigma, dist):
@@ -66,22 +75,9 @@ def somAnimals():
 
 
 def somCyclicTour():
-    '''
-    X = np.random.uniform(0.0, 1.0, (10, 2))
-    X = [[0.36774487, 0.97798252],
-         [0.7865123, 0.26115321],
-         [0.13692526, 0.87530038],
-         [0.41689718, 0.02890185],
-         [0.95716118, 0.61338133],
-         [0.00175163, 0.03152998],
-         [0.044273, 0.9803899],
-         [0.76049118, 0.09521741],
-         [0.22803144, 0.98443609],
-         [0.794949, 0.50350659]]
-    '''
     X = importCities()
     np.random.shuffle(X)
-    W, similaritySequence = SOM(X, 2, 10, epochs=100, distFunc=distToWinnerCircular, sort=True)
+    W, similaritySequence = SOM(X, 2, 10, epochs=300, distFunc=distToWinnerCircular, sort=True)
     # print(similaritySequence)
     xPlot = [X[i][0] for i, winner in similaritySequence]
     yPlot = [X[i][1] for i, winner in similaritySequence]
@@ -99,6 +95,46 @@ def somCyclicTour():
     # plotPointsXY([(weightsX, weightsY)], ["Route"], True)
 
 
+def unpackVoteData(finalMPInfoList):
+    names = []
+    genders = []
+    districts = []
+    partyIdxs = []
+    partyNames = []
+    partyColors = []
+    for name, gender, district, partyTuple in finalMPInfoList:
+        names.append(name)
+        genders.append(gender)
+        districts.append(district)
+        partyIndex, partyName, partyColor = partyTuple
+        partyIdxs.append(partyIndex)
+        partyNames.append(partyName)
+        partyColors.append(partyColor)
+
+    return names, genders, districts, partyIdxs, partyNames, partyColors
+
+
+def somVotes():
+    votes, finalMPInfoList = importVotesAndMPs()
+    names, genders, districts, partyIdxs, partyNames, partyColors = unpackVoteData(finalMPInfoList)
+
+    X = votes
+    W, similaritySequence = SOM(X, 31, 100, epochs=100, distFunc=distToWinner2DGrid, sort=True)
+    # newSimSeq = [(similaritySequence[i][0], similaritySequence[i][1], partyColors[similaritySequence[i][0]])
+    #              for i in range(len(similaritySequence))]
+    colorsSorted = [partyColors[idx] for idx, _ in similaritySequence]
+
+    print(similaritySequence)
+    nodeIdx = [idx for idx, _ in similaritySequence]
+    n = 10
+    print("n:", n)
+    pointsX = [i % n for i in range(len(nodeIdx))]
+    pointsY = [int(i / n) for i in range(len(nodeIdx))]
+    shapes = ["x" if genders[idx] == "Male" else "o" for idx, _ in similaritySequence]
+    plotPointsXY([(pointsX, pointsY)], [""], drawPoints=True, drawLines=False, colors=colorsSorted, shape=shapes)
+
+
 if __name__ == '__main__':
-    somCyclicTour()
+    # somCyclicTour()
     # somAnimals()
+    somVotes()

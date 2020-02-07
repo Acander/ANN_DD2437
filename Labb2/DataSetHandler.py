@@ -80,7 +80,7 @@ def importVotesAndMPs():
     mpDistrict = [int(mpDistrict.strip("\t ")) for mpDistrict in mpDistrictData]
 
     # Import names:
-    mpNameData = open("data_lab2/mpnames.txt", 'r').read().split("\n")
+    mpNameData = open("data_lab2/mpnames.txt", 'r', encoding='latin-1').read().split("\n")
 
     FinalMPInfoList = []
     for mp in range(numMPs):

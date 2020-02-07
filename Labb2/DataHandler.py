@@ -37,12 +37,17 @@ def evaluateModel(model, X, Y, residualError=True):
     return np.mean(error)
 
 
-def plotPointsXY(pointsList, labels, drawPoints=False):
+def plotPointsXY(pointsList, labels, drawPoints=False, drawLines=True, colors=None, shape=None):
     for i, points in enumerate(pointsList):
         x, y = points
-        plt.plot(x, y, label=labels[i])
+        if drawLines:
+            plt.plot(x, y, label=labels[i])
         if drawPoints:
-            plt.plot(x, y, "bo" if i == 0 else "ro")
+            if colors is None:
+                plt.plot(x, y, "bo" if i == 0 else "ro")
+            else:
+                for pIdx in range(len(x)):
+                    plt.scatter(x[pIdx], y[pIdx], color=colors[pIdx], linewidths=1, edgecolors="black", marker=shape[pIdx])
     plt.legend()
     plt.show()
 
