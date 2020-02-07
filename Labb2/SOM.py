@@ -6,8 +6,8 @@ from Labb2.DataSetHandler import importAnimalDataSet, importCities, importVotesA
 
 STEP_SIZE = 0.2
 # SIGMA0 = 1
-SIGMA0 = 500
-TAU = 500
+SIGMA0 = 10
+TAU = 100
 
 
 def distToWinnerChain(winner, nodes):
@@ -53,6 +53,9 @@ def SOM(X, inSize, outSize, epochs=20, distFunc=distToWinnerChain, sort=True):
 
     for t in range(epochs):
         sigma = SIGMA0 * np.exp(-(t * t) / TAU)
+        global STEP_SIZE
+        # if t+1 % 100 == 0:
+            # STEP_SIZE -= 0.1
         for i in range(numCategories):
             winner = closestCentroid(X[i], W)
             distances = distFunc(winner, W)
@@ -116,10 +119,11 @@ def unpackVoteData(finalMPInfoList):
 
 def somVotes():
     votes, finalMPInfoList = importVotesAndMPs()
+    np.random.shuffle(votes)
     names, genders, districts, partyIdxs, partyNames, partyColors = unpackVoteData(finalMPInfoList)
 
     X = votes
-    W, similaritySequence = SOM(X, 31, 100, epochs=100, distFunc=distToWinner2DGrid, sort=True)
+    W, similaritySequence = SOM(X, 31, 100, epochs=20, distFunc=distToWinner2DGrid, sort=True)
     # newSimSeq = [(similaritySequence[i][0], similaritySequence[i][1], partyColors[similaritySequence[i][0]])
     #              for i in range(len(similaritySequence))]
     colorsSorted = [partyColors[idx] for idx, _ in similaritySequence]
@@ -130,8 +134,10 @@ def somVotes():
     print("n:", n)
     pointsX = [i % n for i in range(len(nodeIdx))]
     pointsY = [int(i / n) for i in range(len(nodeIdx))]
-    shapes = ["x" if genders[idx] == "Male" else "o" for idx, _ in similaritySequence]
-    plotPointsXY([(pointsX, pointsY)], [""], drawPoints=True, drawLines=False, colors=colorsSorted, shape=shapes)
+    shapes = ["x" if genders[idx] == "Male" and False else "o" for idx, _ in similaritySequence]
+    districtsSorted = [districts[idx] for idx, _ in similaritySequence]
+    plotPointsXY([(pointsX, pointsY)], [""], drawPoints=True, drawLines=False, colors=colorsSorted, shape=shapes,
+                 districts=districtsSorted)
 
 
 if __name__ == '__main__':
