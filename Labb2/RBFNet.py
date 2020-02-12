@@ -6,7 +6,7 @@ from Labb2.RBFFunc import RBF
 class RadialBasisFunctionNetwork:
 
     def __init__(self, inputSize, outSize, hiddenSize, hiddenCentroids, RBF, lr=0.0005, l1Dist=False):
-        self.outWeights = np.random.normal(0, 0.5, (hiddenSize, outSize))
+        self.outWeights = np.random.normal(-0.05, 0.05, (hiddenSize, outSize))
         self.centroids = hiddenCentroids
         self.numHidden = hiddenSize
         self.l1Dist = l1Dist
@@ -36,7 +36,8 @@ class RadialBasisFunctionNetwork:
     def fit(self, inputs, labels):
         pred = self.predict(inputs)
         loss = (pred - labels)  # Allows for batch
-        # print("Previous:", self.previousHiddenValues, self.previousHiddenValues.shape)
+        #loss = np.abs(pred - labels)  # Allows for batch
+        #print("Previous:", self.previousHiddenValues, self.previousHiddenValues.shape)
         for i in range(pred.shape[1]):
             outputLoss = loss[:, i].reshape((loss.shape[0], 1))
             # print("Loss {}\n".format(i), outputLoss, outputLoss.shape)

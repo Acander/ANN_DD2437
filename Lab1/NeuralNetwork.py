@@ -15,6 +15,7 @@ class DenseLayer:
         return np.random.normal(0, 0.5, (sizeOut, sizeIn + 1))
 
     def forward(self, x):
+        #print(x.shape, self.weights.shape)
         self.cacheInput = x
         self.cachePreActivation = np.matmul(self.weights, x)
         self.cachePostActivation = self.activation.forward(self.cachePreActivation)
@@ -37,7 +38,9 @@ class FeedForwardNet:
 
     def forwardPass(self, x):
         for l in self.layers:
+            #print("Pre", x.shape)
             xWithBias = np.vstack([x, np.ones([1, x.shape[1]])])
+            #print("Post", xWithBias.shape)
             x = l.forward(xWithBias)
         return x
 
