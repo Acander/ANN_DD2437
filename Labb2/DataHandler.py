@@ -1,6 +1,7 @@
 import numpy as np
 import numpy.random as r
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 
 
 def generateData(box=False, shuffle=True, noiseVariance=0.0):
@@ -37,7 +38,31 @@ def evaluateModel(model, X, Y, residualError=True):
     return np.mean(error)
 
 
+def plotBars(districts, leftRightValues):
+    meanRightValuePerDistrict = []
+    for i in range(1, 29 + 1):
+        indicesCurrentDistrict = np.where(np.array(districts) == i)
+        # print("i =", i, ": ", indicesCurrentDistrict)
+        meanRight = np.mean(leftRightValues[indicesCurrentDistrict])
+        meanRightValuePerDistrict.append(meanRight)
+
+    districtList = [str(i) for i in range(1, 29 + 1)]
+    plt.bar(districtList, meanRightValuePerDistrict)
+    plt.xlabel("District")
+    plt.ylabel("Average first feature (left/right scale)")
+    plt.show()
+
+
 def plotPointsXY(pointsList, labels, drawPoints=False, drawLines=True, colors=None, shape=None, districts=None):
+    S = mpatches.Patch(color='red', label='S')
+    M = mpatches.Patch(color='blue', label='M')
+    FP = mpatches.Patch(color='aqua', label='FP')
+    V = mpatches.Patch(color='purple', label='V')
+    MP = mpatches.Patch(color='green', label='MP')
+    KD = mpatches.Patch(color='teal', label='KD')
+    C = mpatches.Patch(color='lime', label='C')
+    No = mpatches.Patch(color='white', label='None')
+
     for i, points in enumerate(pointsList):
         x, y = points
         if drawLines:
@@ -47,11 +72,14 @@ def plotPointsXY(pointsList, labels, drawPoints=False, drawLines=True, colors=No
                 plt.plot(x, y, "bo" if i == 0 else "ro")
             else:
                 for pIdx in range(len(x)):
-                    plt.scatter(x[pIdx], y[pIdx], color=colors[pIdx], linewidths=1, edgecolors="black",
+                    plt.scatter(10 - y[pIdx], x[pIdx], color=colors[pIdx], linewidths=1, edgecolors="black",
                                 marker=shape[pIdx])
                     # plt.annotate(districts[pIdx], (x[pIdx], y[pIdx]), textcoords="offset points", xytext=(10, -4), ha='center')
-    plt.legend()
+    plt.legend(handles=[S, M, FP, V, MP, KD, C, No])
+    plt.xlabel("Feature 1")
+    plt.ylabel("Feature 2")
     plt.show()
+    plotBars(districts, 10 - np.array(pointsList[0][1]))
 
 
 def plotPoints(pointsList, colors, labels, sizes=None, twoD=False):

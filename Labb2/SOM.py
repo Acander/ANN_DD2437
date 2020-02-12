@@ -6,8 +6,8 @@ from Labb2.DataSetHandler import importAnimalDataSet, importCities, importVotesA
 
 STEP_SIZE = 0.2
 # SIGMA0 = 1
-SIGMA0 = 1
-TAU = 1000
+SIGMA0 = 10
+TAU = 2000
 
 
 def distToWinnerChain(winner, nodes):
@@ -23,8 +23,10 @@ def distToWinnerCircular(winner, nodes):
 
 
 def distToWinner2DGrid(winner, nodes):
-    numNodes = len(nodes)
-    n = int(np.sqrt(numNodes))
+    # numNodes = len(nodes)
+    # n = int(np.sqrt(numNodes))
+    numNodes = 100
+    n = 10
     winnerY = int(winner / n)
     winnerX = winner % n
     # print(winnerY, winnerX)
@@ -40,8 +42,9 @@ def distToWinner2DGrid(winner, nodes):
 
 
 def neighbFunc(sigma, dist):
-    print(np.mean(np.exp(- (dist * dist) / (2 * sigma * sigma))) - 0.01)
-    return np.exp(- (dist * dist) / (2 * sigma * sigma))
+    res = np.exp(- (dist * dist) / (2 * sigma * sigma))
+    # print(np.mean(res) - 0.01)
+    return res
 
 
 def meanLength(W):
@@ -118,28 +121,35 @@ def unpackVoteData(finalMPInfoList):
     return names, genders, districts, partyIdxs, partyNames, partyColors
 
 
+# similaritySequence = [ (mpIndex, nodeWinnerIdx) ...]
 def plotVotes(similaritySequence, partyColors, genders, districts):
     n = 10
-    nodeIdx = [idx for idx, _ in similaritySequence]
-    colorsSorted = [partyColors[idx] for idx in nodeIdx]
-    pointsX = [i % n for i in nodeIdx]
-    pointsY = [int(i / n) for i in nodeIdx]
-    shapes = ["x" if genders[idx] == "Male" and False else "o" for idx, _ in similaritySequence]
+    mpIdx = [idx for idx, _ in similaritySequence]
+    # print(mpIdx)
+    winnerIdx = [winner for _, winner in similaritySequence]
+    colorsSorted = [partyColors[idx] for idx in mpIdx]
+    pointsX = [i % n + np.random.uniform(-0.25, 0.25) for i in winnerIdx]
+    pointsY = [int(i / n) + np.random.uniform(-0.25, 0.25) for i in winnerIdx]
+    shapes = ["x" if genders[idx] == "Male" else "o" for idx, _ in similaritySequence]
     districtsSorted = [districts[idx] for idx, _ in similaritySequence]
     plotPointsXY([(pointsX, pointsY)], [""], drawPoints=True, drawLines=False, colors=colorsSorted, shape=shapes,
                  districts=districtsSorted)
 
 
 def somVotes():
+    np.random.seed(1337)
     votes, finalMPInfoList = importVotesAndMPs()
-    np.random.shuffle(votes)
+    # np.random.shuffle(votes)
     names, genders, districts, partyIdxs, partyNames, partyColors = unpackVoteData(finalMPInfoList)
+    numEpochs = 30
+    global TAU
+    TAU *= (numEpochs/200)
 
-    WPrev, similaritySequencePrev = SOM(votes[0:100], 31, 100, epochs=0, distFunc=distToWinner2DGrid, sort=True)
-    W, similaritySequence = SOM(votes[0:100], 31, 100, epochs=100, distFunc=distToWinner2DGrid, sort=True)
+    # WPrev, similaritySequencePrev = SOM(votes, 31, 100, epochs=0, distFunc=distToWinner2DGrid, sort=True)
+    W, similaritySequence = SOM(votes, 31, 100, epochs=numEpochs, distFunc=distToWinner2DGrid, sort=True)
     # newSimSeq = [(similaritySequence[i][0], similaritySequence[i][1], partyColors[similaritySequence[i][0]])
     #              for i in range(len(similaritySequence))]
-    plotVotes(similaritySequencePrev, partyColors, genders, districts)
+    # plotVotes(similaritySequencePrev, partyColors, genders, districts)
     plotVotes(similaritySequence, partyColors, genders, districts)
 
 
