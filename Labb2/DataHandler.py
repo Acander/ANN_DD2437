@@ -75,11 +75,11 @@ def plotPointsXY(pointsList, labels, drawPoints=False, drawLines=True, colors=No
                     plt.scatter(10 - y[pIdx], x[pIdx], color=colors[pIdx], linewidths=1, edgecolors="black",
                                 marker=shape[pIdx])
                     # plt.annotate(districts[pIdx], (x[pIdx], y[pIdx]), textcoords="offset points", xytext=(10, -4), ha='center')
-    plt.legend(handles=[S, M, FP, V, MP, KD, C, No])
-    plt.xlabel("Feature 1")
-    plt.ylabel("Feature 2")
+    # plt.legend(handles=[S, M, FP, V, MP, KD, C, No])
+    # plt.xlabel("Feature 1")
+    # plt.ylabel("Feature 2")
     plt.show()
-    plotBars(districts, 10 - np.array(pointsList[0][1]))
+    # plotBars(districts, 10 - np.array(pointsList[0][1]))
 
 
 def plotPoints(pointsList, colors, labels, sizes=None, twoD=False):

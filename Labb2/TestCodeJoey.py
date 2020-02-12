@@ -34,18 +34,20 @@ Test: 0.009648410206915441
 if __name__ == '__main__':
     xTrain, yTrain, xTest, yTest = generateData(False, shuffle=False, noiseVariance=0.0)
     # plotPointsXY(xTrain, yTrain)
-    numHidden = 60
+    numHidden = 4
     model = RadialBasisFunctionNetwork(1, 1, numHidden, np.random.uniform(0, 2 * np.pi, (numHidden, 1)), RBF,
                                        lr=0.7, l1Dist=False)
 
     # prevCentroids, centroids = CL.learnClusters(xTrain, model.centroids, multiWinner=True)
 
-    model.centroids = np.reshape(np.arange(0, 2 * np.pi, 2 * np.pi / numHidden), (numHidden, 1))
+    # model.centroids = np.reshape(np.arange(0, 2 * np.pi, 2 * np.pi / numHidden), (numHidden, 1))
+    model.centroids = np.random.uniform(0, 10, (numHidden, 1))
     colors = ["bo", "ro", "yo", "go"]
     labels = ["X", "Pre-CL", "Post-CL", "Post-CL-MultiWinner"]
     sizes = np.array([5, 10, 10, 10]) / 2.0
     # plotPoints([np.reshape(xTrain, (len(xTrain))), centroids], colors, labels, sizes)
 
+    '''
     for i in range(1, 100000):
         # if i % 1000 == 0:
         #     model.lr *= 0.98
@@ -58,12 +60,16 @@ if __name__ == '__main__':
             print("Test:", evaluateModel(model, xTest, yTest, True))
 
     yPred = model.predict(xTrain)
-    plotPointsXY([[xTrain, yTrain], [xTrain, yPred]], ["True", "Approx"])
     '''
+    # plotPointsXY([[xTrain, yTrain], [xTrain, yPred]], ["True", "Approx"])
+
+    np.random.seed(1337)
     prevCentroids, centroids = CL.learnClusters(xTrain, model.centroids, multiWinner=False)
     prevCentroids, centroidsMW = CL.learnClusters(xTrain, prevCentroids, multiWinner=True)
     colors = ["bo", "ro", "yo", "go"]
-    labels = ["X", "Pre-CL", "Post-CL", "Post-CL-MultiWinner"]
-    sizes = [5, 10, 10, 10]
-    plotPoints([np.reshape(xTrain, (len(xTrain))), prevCentroids, centroids, centroidsMW], colors, labels, sizes)
-    '''
+    # labels = ["X", "Pre-CL", "Post-CL", "Post-CL-MultiWinner"]
+    labels = ["X", "Pre-CL", "Post-CL"]
+    sizes = [3, 8, 8, 8]
+    # plotPoints([np.reshape(xTrain, (len(xTrain))), prevCentroids, centroids, centroidsMW], colors, labels, sizes)
+    plotPoints([np.reshape(xTrain, (len(xTrain))), prevCentroids, centroids], colors, labels, sizes)
+
