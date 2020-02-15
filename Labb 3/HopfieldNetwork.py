@@ -23,11 +23,6 @@ class HopsNet:
         if (setDiagZero):
             np.fill_diagonal(self.weights, 0)
 
-    def sequentialPredict(self, pattern):
-        hasChanged = True
-        while (hasChanged):
-            hasChanged = False
-
     def _checkIfConverged(self, x, history):
         # print(history[-2:])
         for h in history:
@@ -54,9 +49,27 @@ class HopsNet:
             x = np.array(newX)
             # print("")
             if (self._checkIfConverged(x, history)):
-                return x, epochCounter
+                return x, epochCounter, history
 
             history.append(x.copy())
+
+    def sequentialPredict(self, x, numIteration=10000):
+        '''
+        Expects a numpy array
+        '''
+        history = [x.copy()]
+        lastChanged = 0
+        for epoch in range(numIteration):
+            newX = x.copy()
+            i = np.random.choice(range(len(x)))
+            newX[i] = 1 if np.sum(x * self.weights[i]) > 0 else -1
+            if (newX[i] != x[i]):
+                lastChanged = epoch + 1
+
+            x = np.array(newX)
+            history.append(x.copy())
+
+        return x, lastChanged, history
 
 
 if __name__ == '__main__':
@@ -73,9 +86,9 @@ if __name__ == '__main__':
 
     model = HopsNet(8)
     model.setWeights(patterns)
-    #print(model.weights)
+    # print(model.weights)
 
     for i, n in enumerate(noisyPatterns):
-        final, epochs = model.predict(np.array(n))
+        final, epochs, history = model.sequentialPredict(np.array(n))
         print(np.sum(np.abs(final - patterns[i])), epochs)
     print("\n", final)
