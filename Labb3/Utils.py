@@ -14,7 +14,7 @@ def allPossibleSequences(length):
 def flipBits(pattern, numBits):
     copy = np.copy(pattern)
     indices = np.random.choice(np.arange(len(pattern), dtype=int), numBits, replace=False)
-    print(indices)
+    # print(indices)
     copy[indices] *= -1
     return copy
 
@@ -25,6 +25,13 @@ def energy(weights, pattern):
         for j in range(len(pattern)):
             energySum += weights[i][j] * pattern[i] * pattern[j]
     return -energySum
+
+
+def existsInList(listOfArrs, arr):
+    for a in listOfArrs:
+        if np.array_equal(arr, a):
+            return True
+    return False
 
 
 if __name__ == '__main__':
