@@ -49,7 +49,7 @@ class HopsNet:
             x = np.array(newX)
             # print("")
             if (self._checkIfConverged(x, history)):
-                return x, epochCounter, history
+                return x, epochCounter, history + [x]
 
             history.append(x.copy())
 

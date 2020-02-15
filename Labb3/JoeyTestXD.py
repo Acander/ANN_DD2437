@@ -27,10 +27,15 @@ if __name__ == '__main__':
     print(model.weights)
 
     print("Patterns:")
-    for i, x in enumerate(patterns):
-        prediction, epochs = model.predict(x)
-        print(i, np.sum(np.abs(prediction - x)))
+    # for i, x in enumerate(patterns):
+    prediction, epochs, history = model.predict(allPatterns[10])
+    # prediction, epochs, history = model.sequentialPredict(allPatterns[2], numIteration=10000)
+    print("epochs:", epochs)
+    # print(i, np.sum(np.abs(prediction - x)) / 2)
+    for dp in [history[i] for i in range(0, len(history), 1)]:
+        DataHandler.plotDatapoint(dp)
 
+    '''
     predict10, _ = model.predict(allPatterns[9])
     print("prediction of 10:", np.sum(np.abs(predict10 - allPatterns[0])) / 2)
 
@@ -39,6 +44,7 @@ if __name__ == '__main__':
 
     predict11, _ = model.predict(allPatterns[10])
     print("prediction of 11:", np.sum(np.abs(predict11 - allPatterns[2])) / 2)
+    '''
     '''
 
     print("Noisy:")
