@@ -16,9 +16,10 @@ def importAllPicData():
     return picDatas  # Returns a matrix where each row represents a picture (unformated)
 
 
+'''
 def extractPicSet(picIndex):
     pics = importAllPicData()
-    pic = pics[picIndex-1]
+    pic = pics[picIndex - 1]
     return pic  # Returns an array representing a certain pic (unformated)
 
 
@@ -27,9 +28,22 @@ def formatPic(pic):
 
 
 def plotPic(picIndex):
-    pic = formatPic(extractPicSet(picIndex-1))
+    pic = formatPic(extractPicSet(picIndex - 1))
     for i in range(32):
         for j in range(32):
+            if pic[i][j] == 1:
+                plt.scatter(i, j, color="black")
+            else:
+                plt.scatter(i, j, color="white")
+    plt.show()
+'''
+
+
+def plotDatapoint(dataPoint):
+    xyLen = int(np.sqrt(len(dataPoint)))
+    pic = np.reshape(dataPoint, (xyLen, xyLen))
+    for i in range(xyLen):
+        for j in range(xyLen):
             if pic[i][j] == 1:
                 plt.scatter(i, j, color="black")
             else:
@@ -40,4 +54,6 @@ def plotPic(picIndex):
 if __name__ == '__main__':
     # importPicData()
     # extractPicSet(5)
-    plotPic(3)
+    # plotPic(3)
+    data = importAllPicData()
+    plotDatapoint(data[3])
