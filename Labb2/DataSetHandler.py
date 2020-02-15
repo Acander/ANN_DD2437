@@ -37,8 +37,9 @@ def importTestBallisticData():
         trainingPair = testPairStringList[i].split("\t")
         # print(trainingPair)
         input = tuple(map(float, trainingPair[0].split(" ")))
+        output = tuple(map(float, trainingPair[1].split(" ")))
 
-        testDataset.append(input)
+        testDataset.append((input, output))
         # print(input, output)
 
     return np.array(testDataset)  # Returns an array with a input tuples

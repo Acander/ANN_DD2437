@@ -42,9 +42,22 @@ def extractBallisticData(data):
     return np.array(X), np.array(Y)
 
 
+'''
+With CL:
+ResidualError: 50000
+Train: 0.02122817
+Test: 0.024123956
+
+
+Without CL and uniformly placed in a larger area:
+ResidualError: 50000
+Train: 0.051645212
+Test: 0.056954958
+'''
+
 if __name__ == '__main__':
     # yTrain, xTest, yTest = generateData(False, shuffle=False, noiseVariance=0.0)
-    numHidden = 4
+    numHidden = 50
     # centroids = np.reshape(np.arange(0, 2 * np.pi, 2 * np.pi / numHidden), (numHidden, 1))
     centroids = np.random.uniform(0, 10, (numHidden, 2))
     # newX = []
@@ -54,9 +67,16 @@ if __name__ == '__main__':
     # print(newX)
     # print(centroids)
     X, Y = extractBallisticData(importTrainingBallisticData())
+    # print(importTestBallisticData())
     XTest, YTest = extractBallisticData(importTestBallisticData())
-    print(X)
-    learnClusters(X, centroids, multiWinner=True)
+    # print(XTest)
+    # print(YTest)
+    X = X.astype('float32')
+    Y = Y.astype('float32')
+    XTest = XTest.astype('float32')
+    YTest = YTest.astype('float32')
+    # print(X)
+    # learnClusters(X, centroids, multiWinner=True)
     plotPointsXY([[X[:, 0], X[:, 1]], [centroids[:, 0], centroids[:, 1]]], ["x", "centroids"], drawPoints=True,
                  drawLines=False)
     SIGMA = 1
@@ -71,4 +91,3 @@ if __name__ == '__main__':
             print("ResidualError:", i)
             print("Train:", evaluateModel(model, X, Y, True))
             print("Test:", evaluateModel(model, XTest, YTest, True))
-
