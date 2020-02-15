@@ -4,7 +4,7 @@ from Lab1.NeuralNetwork import DenseLayer
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # Removes the use of GPU
 
-from Labb2 import DataHandler, RBFFunc, RBFNet, TFNet
+from Labb2 import DataHandler, RBFFunc, RBFNet, TFNet, CL
 from Lab1 import NeuralNetwork, Losses, Activations
 import numpy as np
 
@@ -43,53 +43,63 @@ if __name__ == '__main__':
     cleanTestX = tf.convert_to_tensor(cleanTestX, dtype=tf.float32)
     cleanTestY = tf.convert_to_tensor(cleanTestY, dtype=tf.float32)
 
-    trainX, trainY, testX, testY = DataHandler.generateData(noiseVariance=0, box=False)
+    trainX, trainY, testX, testY = DataHandler.generateData(noiseVariance=0.1, box=False)
     trainX = tf.convert_to_tensor(trainX, dtype=tf.float32)
     trainY = tf.convert_to_tensor(trainY, dtype=tf.float32)
     testX = tf.convert_to_tensor(testX, dtype=tf.float32)
     testY = tf.convert_to_tensor(testY, dtype=tf.float32)
     results = {}
 
-    numberOfPoints = 20
-    steps = 13000
-    #points = np.array([[np.pi / (numberOfPoints / 2) * i] for i in range(numberOfPoints)])
+    numberOfPoints = 30
+    steps = 300000
+    points = np.array([[np.pi / (numberOfPoints / 2) * i] for i in range(numberOfPoints)])
     #print(points.shape)
 
+    #points = np.random.uniform(0, np.max(trainX), (30, 1))
+    _, post = CL.learnClusters(trainX, points.copy(), iterations=30000, multiWinner=False)
+    print(post.shape, points.shape)
+
+    preSort = np.sort(points, axis=None)
+    postSort = np.sort(post, axis=None)
+    print(preSort)
+    print(postSort)
+    print(np.sum(np.abs(preSort-postSort)))
+
+    #print(post)
     # for r in [0.0001, 0.0005, 0.001, 0.002, 0.003, 0.005]:
     #for r in [0.2, 0.3, 0.4, 0.5, 0.6, 0.8, 1, 1.2, 1.4, 1.6]:
-    for r in range(1, 60):
-        points = np.random.uniform(0, np.max(trainX), (r, 1))
-        print(points.shape)
+    print(points.shape)
 
-        #myModel = NeuralNetwork.FeedForwardNet(layers, Losses.MSE(), 0.001)
+    #myModel = NeuralNetwork.FeedForwardNet(layers, Losses.MSE(), 0.001)
 
-        myModel = TFNet.RadialBasisFunctionNetwork(1, 1, r, points, 1, lr=0.001)
-        results[r] = []
-        for i in range(steps):
-            '''
-            randomOrder = np.random.choice(np.arange(len(trainX)), len(trainX), replace=False)
-            batchLoss = []
-            for p in randomOrder:
-                loss = myModel.fit([trainX[p]], [trainY[p]])
-                batchLoss.append(loss)
-            if (i % 10 == 0):
-                print(np.mean(batchLoss), myModel.lr, i, "/", steps)
+    myModel = TFNet.RadialBasisFunctionNetwork(1, 1, 30, points, 1, lr=0.001)
+    r = "Non-Multiple Winners"
+    for i in range(steps):
+        '''
+        randomOrder = np.random.choice(np.arange(len(trainX)), len(trainX), replace=False)
+        batchLoss = []
+        for p in randomOrder:
+            loss = myModel.fit([trainX[p]], [trainY[p]])
+            batchLoss.append(loss)
+        if (i % 10 == 0):
+            print(np.mean(batchLoss), myModel.lr, i, "/", steps)
 
-            results[r].append(np.mean(batchLoss))
-            '''
-            loss = myModel.fit(trainX, trainY)
-            #results[r].append(loss)
-            if (i % 1000 == 0):
-                print(loss, myModel.lr, i, "/", steps)
+        results[r].append(np.mean(batchLoss))
 
-        testPred = myModel.predict(np.array(testX))
-        error = tf.losses.MeanAbsoluteError()(testY, testPred)
-        print("Test Error:", error, r)
+        '''
+        loss = myModel.fit(trainX, trainY)
+        #results[r].append(loss)
+        if (i % 1000 == 0):
+            print(loss, myModel.lr, i, "/", steps)
 
-        testPred = myModel.predict(np.array(cleanTestX))
-        error = tf.losses.MeanAbsoluteError()(cleanTestY, testPred)
-        print("Clean Test Error:", error, r)
-        results[r] = error
+    testPred = myModel.predict(np.array(testX))
+    error = tf.losses.MeanAbsoluteError()(testY, testPred)
+    print("Test Error:", error, r)
+
+    testPred = myModel.predict(np.array(cleanTestX))
+    error = tf.losses.MeanAbsoluteError()(cleanTestY, testPred)
+    print("Clean Test Error:", error, r)
+    results[r] = error
 
     import pickle
 
