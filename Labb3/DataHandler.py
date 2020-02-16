@@ -1,12 +1,13 @@
 import numpy as np
 import matplotlib.pyplot as plt
 
-
+'''
 def importPatternData():
     x1D = [1, -1, 1, -1, 1, -1, -1, 1]
     x2D = [1, 1, -1, -1, -1, 1, -1, -1]
     x3D = [1, 1, 1, 1, -1, 1, 1, -1, 1]
     return x1D, x2D, x3D
+'''
 
 
 def importAllPicData():
