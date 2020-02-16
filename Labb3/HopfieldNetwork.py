@@ -20,6 +20,7 @@ class HopsNet:
 
         final = np.array(results)
         self.weights = np.sum(final, axis=0)
+        #self.weights = np.average(final, axis=0)
         if (setDiagZero):
             np.fill_diagonal(self.weights, 0)
 
