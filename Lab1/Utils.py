@@ -16,11 +16,11 @@ def plotPoints(points, line=None, line2=None, label1="", label2=""):
     Expects points to be a list of tuples:
         Tuple1: (xPoints, yPoints, color)
     '''
-    plt.xlabel('t')
-    plt.ylabel('y')
+    plt.xlabel('Noise Ratio')
+    plt.ylabel('Reconstruction Loss')
 
-    for x, y, color in points:
-        plt.plot(x, y, color)
+    for x, y, color, l in points:
+        plt.plot(x, y, color, label=l)
 
     xMin = np.min(np.concatenate(([p[0] for p in points])))
     xMax = np.max(np.concatenate(([p[0] for p in points])))
