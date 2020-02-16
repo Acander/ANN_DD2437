@@ -27,11 +27,11 @@ def energy(weights, pattern):
     return -energySum
 
 
-def existsInList(listOfArrs, arr):
-    for a in listOfArrs:
-        if np.array_equal(arr, a):
-            return True
-    return False
+def generateRandomWeightMatrix(numberOfNodes, symmetric=False):
+    w = np.random.normal(0, 1, (numberOfNodes, numberOfNodes))
+    if (symmetric == False):
+        return w
+    return (w + w.T) / 2
 
 
 if __name__ == '__main__':
