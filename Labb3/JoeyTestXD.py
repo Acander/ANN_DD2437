@@ -24,10 +24,20 @@ if __name__ == '__main__':
 
     model = HopsNet(P)
     model.setWeights(patterns, setDiagZero=False)
+    model.weights = Utils.generateRandomWeightMatrix(P, True)
 
-    print(model.weights)
+    prediction, epochs, history = model.sequentialPredict(allPatterns[0], numIteration=100000)
+    print(epochs)
+    # energies = [Utils.energy(model.weights, history[i]) for i in range(0, len(history), 1000)]
+    # print(energies)
+    energyInit = Utils.energy(model.weights, history[0])  # * 10 ** (-6)
+    energyLast = Utils.energy(model.weights, prediction)  # * 10 ** (-6)
+    print(energyInit)
+    print(energyLast)
+    # print(model.weights)
 
-    print("Patterns:")
+    '''
+    # print("Patterns:")
     # for i, x in enumerate(patterns):
     # prediction, epochs, history = model.predict(allPatterns[10])
     prediction, _, history = model.sequentialPredict(allPatterns[9], numIteration=7000)
@@ -43,6 +53,7 @@ if __name__ == '__main__':
     plt.xlabel("Iterations")
     plt.ylabel("Energy * 10^-6")
     plt.show()
+    '''
     # print("epochs:", epochs)
     # print("energy:", Utils.energy(model.weights, allPatterns[0]))
     '''
