@@ -167,9 +167,9 @@ def extractExtremeValues(points):
 """
 
 
-def weightHistogramGenerator(weightData):
-    summary.histogram("Weight data", weightData, step=None, buckets=None, description=None)
+# def weightHistogramGenerator(weightData):
+#     summary.histogram("Weight data", weightData, step=None, buckets=None, description=None)
 
 
-weightVectors = [0.1, 0.4, 0.3, 0.2, 0.2, 0.1, 0.2, 0.4, 0.3, 0.2]
-weightHistogramGenerator(Variable(weightVectors, float64))
+# weightVectors = [0.1, 0.4, 0.3, 0.2, 0.2, 0.1, 0.2, 0.4, 0.3, 0.2]
+# weightHistogramGenerator(Variable(weightVectors, float64))

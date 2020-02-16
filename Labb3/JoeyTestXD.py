@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 from Labb3 import Utils, DataHandler
+from Labb3.CapacityTests import _testModelOnPatterns, capacityLimit
 from Labb3.HopfieldNetwork import HopsNet
 
 if __name__ == '__main__':
@@ -22,18 +23,38 @@ if __name__ == '__main__':
     patterns = allPatterns[0:3]
     P = len(patterns[0])
 
-    model = HopsNet(P)
-    model.setWeights(patterns, setDiagZero=False)
-    model.weights = Utils.generateRandomWeightMatrix(P, True)
+    numPatterns = 20
+    sparseP = DataHandler.generateSparsePattern(P, 0.1, numPatterns)
 
-    prediction, epochs, history = model.sequentialPredict(allPatterns[0], numIteration=100000)
-    print(epochs)
+    model = HopsNet(P)
+    # model.setWeights(sparseP, setDiagZero=True, removeBias=True)
+    # model.weights = Utils.generateRandomWeightMatrix(P, True)
+    ratios = []
+    for theta in range(-10, 100+1, 5):
+        ratio = capacityLimit(model, sparseP, theta)
+        ratios.append(ratio)
+        print("theta=", theta, ": ", ratio)
+
+    plt.plot(range(-10, 100+1, 5), ratios)
+    plt.xlabel("Theta")
+    plt.ylabel("Ratio")
+    plt.title("Number of patterns: " + str(numPatterns))
+    plt.show()
+    # ratios = []
+    # for theta in range(-3, 4, 1):
+     #    ratios.append(_testModelOnPatterns(model, sparseP, theta))
+
+    # print(ratios)
+
+    # prediction, epochs, history = model.sequentialPredict(sparseP[0], numIteration=10000, theta=0)
+    # print(epochs)
     # energies = [Utils.energy(model.weights, history[i]) for i in range(0, len(history), 1000)]
     # print(energies)
-    energyInit = Utils.energy(model.weights, history[0])  # * 10 ** (-6)
-    energyLast = Utils.energy(model.weights, prediction)  # * 10 ** (-6)
-    print(energyInit)
-    print(energyLast)
+    # print(energies)
+    # energyInit = Utils.energy(model.weights, history[0])  # * 10 ** (-6)
+    # energyLast = Utils.energy(model.weights, prediction)  # * 10 ** (-6)
+    # print(energyInit)
+    # print(energyLast)
     # print(model.weights)
 
     '''

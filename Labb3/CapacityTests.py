@@ -3,11 +3,25 @@ from Labb3 import DataHandler, HopfieldNetwork, NoiseTests, Utils as Utils3
 import numpy as np
 
 
-def _testModelOnPatterns(model, patterns):
+def capacityLimit(model, patterns, theta=0):
+    # for i in range(1, len(patterns) + 1, 5):
+    model.setWeights(patterns, setDiagZero=True, removeBias=True)
+    score = [0, 0]
+    for p in patterns:
+        final, epochCounter, history = model.predict(p, theta)
+        diffScore = NoiseTests._getDifferenceInpatterns(final, p)
+        score[0 if diffScore == 0 else 1] += 1
+
+    ratio = score[0] / (score[0] + score[1])
+
+    return ratio
+
+
+def _testModelOnPatterns(model, patterns, theta=0):
     score = [0, 0]
     for p in patterns:
         # final, epochCounter, history = model.predict(Utils3.flipBits(p, 3))
-        final, epochCounter, history = model.predict(p)
+        final, epochCounter, history = model.sequentialPredict(p, theta)
         diffScore = NoiseTests._getDifferenceInpatterns(final, p)
         score[0 if diffScore == 0 else 1] += 1
 
@@ -39,7 +53,7 @@ if __name__ == '__main__':
         print("*****", i)
         model = HopfieldNetwork.HopsNet(100)
         model.setWeights(patterns[:i], setDiagZero=True)
-        #print(np.diag(model.weights))
+        # print(np.diag(model.weights))
         # results.append((np.mean(np.abs(model.weights)), np.std(model.weights)))
         results.append(_testModelOnPatterns(model, patterns[:i]))
 

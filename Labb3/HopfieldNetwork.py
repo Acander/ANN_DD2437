@@ -6,12 +6,20 @@ class HopsNet:
     def __init__(self, numberOfNodes):
         self.weights = np.random.random((numberOfNodes, numberOfNodes))
         self.numNodes = numberOfNodes
+        self.removeBias = False
 
-    def setWeights(self, patterns, setDiagZero=False):
+    def setWeights(self, patterns, setDiagZero=False, removeBias=False):
         '''
         Expects a nested list.
         Where every inner list is a pattern.
         '''
+        # patterns = np.dtype(np.copy(patterns), np.float64)
+
+        if removeBias:
+            self.removeBias = True
+            avgActivity = np.mean(patterns)
+            patterns = patterns - avgActivity
+
         data = np.array(patterns)
         results = []
         for p in data:
@@ -20,7 +28,7 @@ class HopsNet:
 
         final = np.array(results)
         self.weights = np.sum(final, axis=0)
-        #self.weights = np.average(final, axis=0)
+        # self.weights = np.average(final, axis=0)
         if (setDiagZero):
             np.fill_diagonal(self.weights, 0)
 
@@ -32,7 +40,7 @@ class HopsNet:
                 return True
         return False
 
-    def predict(self, x):
+    def predict(self, x, theta=0):
         '''
         Expects a numpy array
         '''
@@ -44,8 +52,11 @@ class HopsNet:
             # print(epochCounter)
             newX = []
             for i in range(len(x)):
-                value = x * self.weights[i]
-                newX.append(1 if np.sum(value) > 0 else -1)
+                if self.removeBias:
+                    newX.append(0.5 + 0.5 * np.sign(np.sum(x * self.weights[i]) - theta))
+                else:
+                    value = x * self.weights[i]
+                    newX.append(np.sign(np.sum(value)))
                 # print(value, np.sum(value), newX[-1] == x[i])
             x = np.array(newX)
             # print("")
@@ -54,7 +65,7 @@ class HopsNet:
 
             history.append(x.copy())
 
-    def sequentialPredict(self, x, numIteration=10000):
+    def sequentialPredict(self, x, numIteration=10000, theta=0):
         '''
         Expects a numpy array
         '''
@@ -63,7 +74,10 @@ class HopsNet:
         for epoch in range(numIteration):
             newX = x.copy()
             i = np.random.choice(range(len(x)))
-            newX[i] = 1 if np.sum(x * self.weights[i]) > 0 else -1
+            if self.removeBias:
+                newX[i] = 0.5 + 0.5 * np.sign(np.sum(x * self.weights[i]) - theta)
+            else:
+                newX[i] = np.sign(np.sum(x * self.weights[i]))
             if (newX[i] != x[i]):
                 lastChanged = epoch + 1
 

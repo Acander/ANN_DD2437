@@ -52,9 +52,22 @@ def plotDatapoint(dataPoint):
     plt.show()
 
 
+def generateSparsePattern(N, activityRatio, numPatterns):
+    patterns = np.zeros((numPatterns, N))
+    idxRange = np.arange(N)
+    numOnes = int(N * activityRatio)
+    for i in range(numPatterns):
+        indices = np.random.choice(idxRange, numOnes, replace=False)
+        patterns[i][indices] = 1
+
+    return patterns
+
+
 if __name__ == '__main__':
     # importPicData()
     # extractPicSet(5)
     # plotPic(3)
-    data = importAllPicData()
-    plotDatapoint(data[3])
+    # data = importAllPicData()
+    # plotDatapoint(data[3])
+    p = generateSparsePattern(10, 0.7, 5)
+    print(p)
