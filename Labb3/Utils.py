@@ -20,11 +20,14 @@ def flipBits(pattern, numBits):
 
 
 def energy(weights, pattern):
-    energySum = 0
-    for i in range(len(pattern)):
-        for j in range(len(pattern)):
-            energySum += weights[i][j] * pattern[i] * pattern[j]
-    return -energySum
+    pattern = np.reshape(pattern, (1, len(pattern)))
+    return - np.sum(weights * (pattern.T @ pattern))
+
+    # energySum = 0
+    # for i in range(len(pattern)):
+    #     for j in range(len(pattern)):
+    #         energySum += weights[i][j] * pattern[i] * pattern[j]
+    # return -energySum
 
 
 def generateRandomWeightMatrix(numberOfNodes, symmetric=False):

@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib.pyplot as plt
 
 from Labb3 import Utils, DataHandler
 from Labb3.HopfieldNetwork import HopsNet
@@ -28,12 +29,33 @@ if __name__ == '__main__':
 
     print("Patterns:")
     # for i, x in enumerate(patterns):
-    prediction, epochs, history = model.predict(allPatterns[10])
-    # prediction, epochs, history = model.sequentialPredict(allPatterns[2], numIteration=10000)
-    print("epochs:", epochs)
+    # prediction, epochs, history = model.predict(allPatterns[10])
+    prediction, _, history = model.sequentialPredict(allPatterns[9], numIteration=7000)
+    print("Cacling energies...")
+    stepSize = 50
+    energies = [Utils.energy(model.weights, history[i]) * 10 ** (-6) for i in range(0, len(history), stepSize)]
+    print("Energies calculated")
+    plt.plot(range(0, len(history), stepSize), energies, label="p10")
+    prediction, _, history = model.sequentialPredict(allPatterns[10], numIteration=7000)
+    energies = [Utils.energy(model.weights, history[i]) * 10 ** (-6) for i in range(0, len(history), stepSize)]
+    plt.plot(range(0, len(history), stepSize), energies, label="p11")
+    plt.legend()
+    plt.xlabel("Iterations")
+    plt.ylabel("Energy * 10^-6")
+    plt.show()
+    # print("epochs:", epochs)
+    # print("energy:", Utils.energy(model.weights, allPatterns[0]))
+    '''
+    p1: -1473936 * 10^-6 => -1,4
+    p2: -1398416
+    p3: -1497344
+    p11, incorrect attraction found by sync: -1634316
+    p10: -425964
+    p11: -177664
+    '''
     # print(i, np.sum(np.abs(prediction - x)) / 2)
-    for dp in [history[i] for i in range(0, len(history), 1)]:
-        DataHandler.plotDatapoint(dp)
+    # for dp in [history[i] for i in range(0, len(history), 1000)]:
+        # DataHandler.plotDatapoint(dp)
 
     '''
     predict10, _ = model.predict(allPatterns[9])
