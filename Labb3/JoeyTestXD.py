@@ -23,8 +23,8 @@ if __name__ == '__main__':
     patterns = allPatterns[0:3]
     P = len(patterns[0])
 
-    numPatterns = 20
-    sparseP = DataHandler.generateSparsePattern(P, 0.1, numPatterns)
+    numPatterns = int(P * 0.13)
+    sparseP = DataHandler.generateSparsePattern(P, 0.01, numPatterns)
 
     model = HopsNet(P)
     # model.setWeights(sparseP, setDiagZero=True, removeBias=True)

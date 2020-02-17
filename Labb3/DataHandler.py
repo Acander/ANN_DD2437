@@ -67,7 +67,10 @@ if __name__ == '__main__':
     # importPicData()
     # extractPicSet(5)
     # plotPic(3)
-    # data = importAllPicData()
-    # plotDatapoint(data[3])
-    p = generateSparsePattern(10, 0.7, 5)
-    print(p)
+    data = importAllPicData()
+    data = (data + 1) / 2
+    for dp in data:
+        print(np.mean(dp))
+
+    # p = generateSparsePattern(10, 0.7, 5)
+    # print(p)
