@@ -1,4 +1,4 @@
-from util import *
+from Labbabbab4.codeAlaPawel.util import *
 
 class RestrictedBoltzmannMachine():
     '''

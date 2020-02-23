@@ -1,5 +1,5 @@
-from util import *
-from rbm import RestrictedBoltzmannMachine
+from Labbabbab4.codeAlaPawel.util import *
+from Labbabbab4.codeAlaPawel.rbm import RestrictedBoltzmannMachine
 
 class DeepBeliefNet():    
 

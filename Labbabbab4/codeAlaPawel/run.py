@@ -1,6 +1,6 @@
-from util import *
-from rbm import RestrictedBoltzmannMachine 
-from dbn import DeepBeliefNet
+from Labbabbab4.codeAlaPawel.util import *
+from Labbabbab4.codeAlaPawel.rbm import RestrictedBoltzmannMachine
+from Labbabbab4.codeAlaPawel.dbn import DeepBeliefNet
 
 if __name__ == "__main__":
 
