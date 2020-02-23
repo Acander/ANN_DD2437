@@ -16,8 +16,8 @@ def plotPoints(points, line=None, line2=None, label1="", label2=""):
     Expects points to be a list of tuples:
         Tuple1: (xPoints, yPoints, color)
     '''
-    plt.xlabel('Noise Ratio')
-    plt.ylabel('Reconstruction Loss')
+    plt.xlabel('Number of Patterns')
+    plt.ylabel('Reconstruction Ratio')
 
     for x, y, color, l in points:
         plt.plot(x, y, color, label=l)
