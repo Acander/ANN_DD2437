@@ -15,4 +15,4 @@ if __name__ == '__main__':
                                      batch_size=20
                                      )
 
-    rbm.cd1(visible_trainset=train_imgs, n_iterations=100)
+    rbm.cd1(visible_trainset=train_imgs, n_iterations=10000)

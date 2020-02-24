@@ -84,7 +84,7 @@ class RestrictedBoltzmannMachine():
         """
         # n_iterations = 10
         print("learning CD1")
-        visible_trainset = visible_trainset[0:1000]
+        visible_trainset = visible_trainset[0:10]
         print("Converting to TF tensor")
         visible_trainset = tf.convert_to_tensor(visible_trainset)
 
@@ -100,15 +100,20 @@ class RestrictedBoltzmannMachine():
             ph1, h1 = self.get_h_given_v(v1)
 
             self.batch_size = len(visible_trainset)
-            print("Starting to calc. energy")
-            energyPrev = UtilsEgen.energyAvg(visible_trainset, h0, self.weight_vh, self.bias_v, self.bias_h, matrixOps=False)
-            energyPost = UtilsEgen.energyAvg(v1, h1, self.weight_vh, self.bias_v, self.bias_h, matrixOps=False)
-            print("EnergyDiff:", energyPost - energyPrev)
+            # print("Starting to calc. energy")
+            # energyPrev = UtilsEgen.energyAvg(visible_trainset, h0, self.weight_vh, self.bias_v, self.bias_h, matrixOps=False)
+            # energyPost = UtilsEgen.energyAvg(v1, h1, self.weight_vh, self.bias_v, self.bias_h, matrixOps=False)
+            # print("EnergyDiff:", energyPost - energyPrev)
 
+            recLoss = UtilsEgen.meanReconstLoss(v1, visible_trainset)
+            print("Recloss:", recLoss)
+            '''
             print("Starting to calc. energy")
             energyPrev = UtilsEgen.energyAvg(visible_trainset, h0, self.weight_vh, self.bias_v, self.bias_h, matrixOps=True)
             energyPost = UtilsEgen.energyAvg(v1, h1, self.weight_vh, self.bias_v, self.bias_h, matrixOps=True)
             print("EnergyDiff:", energyPost - energyPrev)
+            '''
+
 
             # print(ph0.shape)
             # kld = tf.keras.losses.KLD(ph0, ph1)
@@ -152,15 +157,15 @@ class RestrictedBoltzmannMachine():
         # input(t.shape)
         t = tf.matmul(tf.expand_dims(v_0, axis=2), tf.expand_dims(h_0, axis=1))
         meanDeltaWeights = np.mean(t, axis=0)
-        print("****")
-        print(tf.expand_dims(v_0, axis=2).shape, tf.expand_dims(h_0, axis=1).shape)
+        # print("****")
+        # print(tf.expand_dims(v_0, axis=2).shape, tf.expand_dims(h_0, axis=1).shape)
 
-        print(h_0.shape, h_k.shape)
+        # print(h_0.shape, h_k.shape)
         meanDeltaBiasV = np.mean(v_0 - v_k, axis=0)
         meanDeltaBiasH = np.mean(h_0 - h_k, axis=0)
 
-        print(meanDeltaBiasV.shape)
-        print(meanDeltaBiasH.shape)
+        # print(meanDeltaBiasV.shape)
+        # print(meanDeltaBiasH.shape)
 
         '''
         sumWeights = np.zeros(self.weight_vh.shape)
@@ -179,7 +184,7 @@ class RestrictedBoltzmannMachine():
         # self.delta_bias_h += 0
 
         self.delta_bias_v = meanDeltaBiasV * self.learning_rate
-        self.delta_weight_vh = meanDeltaWeights * self.learning_rate
+        self.delta_weight_vh = meanDeltaWeights * self.learning_rate * -1
         self.delta_bias_h = meanDeltaBiasH * self.learning_rate
 
         self.bias_v += self.delta_bias_v

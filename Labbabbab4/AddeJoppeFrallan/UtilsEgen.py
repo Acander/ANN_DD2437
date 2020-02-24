@@ -2,6 +2,10 @@ import numpy as np
 import tensorflow as tf
 
 
+def meanReconstLoss(v0, v1):
+    return np.mean(np.sum(np.abs(v1 - v0), axis=1))
+
+
 def energyAvg(visible, hidden, weights, biasV, biasH, matrixOps=True):
     if matrixOps:
         term1 = np.sum(biasV * visible, axis=1)
