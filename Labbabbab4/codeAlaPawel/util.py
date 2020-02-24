@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import os
 
 
 def sigmoid(support):
@@ -82,19 +83,25 @@ def read_mnist(dim=[28, 28], n_train=60000, n_test=1000):
     """
     import scipy.misc
 
-    train_imgs = load_idxfile("train-images-idx3-ubyte")
+    cur_path = os.path.dirname(__file__)
+
+    # new_path = os.path.relpath('..\\subfldr1\\testfile.txt', cur_path)
+    # filePath = "/Labbabbab4/codeAlaPawel/"
+    filePath = cur_path + "\\"
+
+    train_imgs = load_idxfile(filePath + "train-images-idx3-ubyte")
     train_imgs = train_imgs / 255.
     train_imgs = train_imgs.reshape(-1, dim[0] * dim[1])
 
-    train_lbls = load_idxfile("train-labels-idx1-ubyte")
+    train_lbls = load_idxfile(filePath + "train-labels-idx1-ubyte")
     train_lbls_1hot = np.zeros((len(train_lbls), 10), dtype=np.float32)
     train_lbls_1hot[range(len(train_lbls)), train_lbls] = 1.
 
-    test_imgs = load_idxfile("t10k-images-idx3-ubyte")
+    test_imgs = load_idxfile(filePath + "t10k-images-idx3-ubyte")
     test_imgs = test_imgs / 255.
     test_imgs = test_imgs.reshape(-1, dim[0] * dim[1])
 
-    test_lbls = load_idxfile("t10k-labels-idx1-ubyte")
+    test_lbls = load_idxfile(filePath + "t10k-labels-idx1-ubyte")
     test_lbls_1hot = np.zeros((len(test_lbls), 10), dtype=np.float32)
     test_lbls_1hot[range(len(test_lbls)), test_lbls] = 1.
 
@@ -124,3 +131,5 @@ def stitch_video(fig, imgs):
     import matplotlib.animation as animation
 
     return animation.ArtistAnimation(fig, imgs, interval=100, blit=True, repeat=False)
+
+
