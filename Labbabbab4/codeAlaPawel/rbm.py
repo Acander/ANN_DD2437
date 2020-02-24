@@ -3,13 +3,13 @@ import os
 # os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 from Labbabbab4.AddeJoppeFrallan import UtilsEgen
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from Labbabbab4.codeAlaPawel.util import *
 import tensorflow as tf
 
 
-class RestrictedBoltzmannMachine():
+class RestrictedBoltzmannMachine(tf.keras.Model):
     '''
     For more details : A Practical Guide to Training Restricted Boltzmann Machines https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
     '''
@@ -70,65 +70,51 @@ class RestrictedBoltzmannMachine():
           visible_trainset: training data for this rbm, shape is (size of training set, size of visible layer)
           n_iterations: number of iterations of learning (each iteration learns a mini-batch)
         """
-        # n_iterations = 10
-        print("learning CD1")
-        # visible_trainset = visible_trainset[:10]
-        print("Converting to TF tensor")
-        visible_trainset = tf.convert_to_tensor(visible_trainset)
 
-        n_samples = visible_trainset.shape[0]
+        print("learning CD1")
+        print("Converting to TF tensor")
+        f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
+        g = lambda x, n: tf.Variable(tf.convert_to_tensor(x, dtype=tf.float32), name=n)
+        partSize = 1000
+        numberOfParts = int(np.ceil(len(visible_trainset)) / partSize)
+        datasetParts = [f(visible_trainset[i * partSize:(i + 1) * partSize]) for i in range(0, numberOfParts)]
+        print("Number of parts:", len(datasetParts))
+
+        self.weight_vh = g(self.weight_vh, "weight_vg")
+        self.bias_v = g(self.bias_v, "bias_v")
+        self.bias_h = g(self.bias_h, "bias_h")
+        self.delta_weight_vh = g(self.delta_weight_vh, "delta_weight_vh")
+        self.delta_bias_v = g(self.delta_bias_v, "delta_bias_v")
+        self.delta_bias_h = g(self.delta_bias_h, "delta_bias_h")
+        import time
 
         trainLosses = []
         testLosses = []
         for epoch in range(n_iterations):
             print("Epoch: {}/{}".format(epoch, n_iterations))
             visible_trainset = tf.random.shuffle(visible_trainset)
-            epochLoss = 0
-            # epochLossTest = 0
-            numIterationsInBatch = int(np.ceil(len(visible_trainset)) / self.batch_size)
-            for b in range(0, numIterationsInBatch):
-                # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
-                # you may need to use the inference functions 'get_h_given_v' and 'get_v_given_h'.
-                # note that inference methods returns both probabilities and activations (samples from probablities) and you may have to decide when to use what.
+            epochStartTime = time.time()
 
-                dataBatch = visible_trainset[b * self.batch_size: (b + 1) * self.batch_size]
-                ph0, h0 = self.get_h_given_v(dataBatch)
-                pv1, v1 = self.get_v_given_h(h0)
-                ph1, h1 = self.get_h_given_v(v1)
-                epochLoss += UtilsEgen.meanReconstLoss(v1, dataBatch)
-                # epochLossTest += UtilsEgen.meanReconstLossTestSet(v1, testSet)
-                if (b % 10 == 0):
-                    print("Loss({}/{}): {}".format(b, numIterationsInBatch, np.round(epochLoss / (b + 1), decimals=3)))
+            for p in datasetParts:
+                numIterationsInBatch = int(np.ceil(len(p)) / self.batch_size)
+                for b in range(0, numIterationsInBatch):
+                    dataBatch = p[b * self.batch_size: (b + 1) * self.batch_size]
+                    loss = self.forwardAndUpdate(dataBatch)
+                    if (b == 0):
+                        print(loss)
 
-                if (b >= 1000 and b % 1000 == 0):
-                    print("Decreasing Learning rate")
-                    self.learning_rate *= 0.9
-                # [TODO TASK 4.1] update the parameters using function 'update_params'
-                self.update_params(dataBatch, h0, v1, h1)
-                # visualize once in a while when visible layer is input images
+            # print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
+            print("Epoch Time:", time.time() - epochStartTime)
 
-                '''
-                if it % self.rf["period"] == 0 and self.is_bottom:
-                    viz_rf(weights=self.weight_vh[:, self.rf["ids"]].reshape((self.image_size[0], self.image_size[1], -1)),
-                           it=it, grid=self.rf["grid"])
-    
-                # print progress
-    
-                if it % self.print_period == 0:
-                    print("iteration=%7d recon_loss=%4.4f" % (it, np.linalg.norm(visible_trainset - visible_trainset)))
-                '''
+    @tf.function
+    def forwardAndUpdate(self, dataBatch):
+        ph0, h0 = self.get_h_given_v(dataBatch)
+        pv1, v1 = self.get_v_given_h(h0)
+        ph1, h1 = self.get_h_given_v(v1)
+        self.update_params(dataBatch, h0, v1, h1)
+        return UtilsEgen.meanReconstLoss(dataBatch, v1)
 
-            trainLoss = np.mean(epochLoss / numIterationsInBatch)
-            trainLosses.append(trainLoss)
-            print("Recloss:", np.round(trainLoss, decimals=3))
-            if testSet is not None:
-                testLoss = UtilsEgen.meanReconstLossTestSet(self, testSet)
-                testLosses.append(testLoss)
-                print("RecLossTest:", np.round(testLoss, decimals=3))
-
-        print(trainLosses)
-        if testSet is not None:
-            print(testLosses)
+            print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
 
     def update_params(self, v_0, h_0, v_k, h_k):
 
@@ -147,24 +133,39 @@ class RestrictedBoltzmannMachine():
         # [TODO TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
 
         # t = tf.matmul(tf.expand_dims(v_0 - v_k, axis=2), tf.expand_dims(h_0 - h_k, axis=1))
+        # print(v_0.dtype, h_0.dtype)
+
         t = tf.matmul(tf.expand_dims(v_0, axis=2), tf.expand_dims(h_0, axis=1))
         t2 = tf.matmul(tf.expand_dims(v_k, axis=2), tf.expand_dims(h_k, axis=1))
         t = t - t2
-        meanDeltaWeights = np.mean(t, axis=0)
 
-        meanDeltaBiasV = np.mean(v_0 - v_k, axis=0)
-        meanDeltaBiasH = np.mean(h_0 - h_k, axis=0)
+        '''
+        self.bench *= 0
+        self.bench2 *= 0
+        f = lambda x, y: tf.matmul(tf.expand_dims(x, axis=1), tf.expand_dims(y, axis=0))
+        for i in range(len(v_0)):
+            self.bench += f(tf.transpose(v_0[i]), h_0[i])
+            self.bench2 += f(tf.transpose(v_k[i]), h_k[i])
+
+        t = self.bench / len(v_0) - self.bench2 / len(v_0)
+        '''
+        meanDeltaWeights = tf.reduce_mean(t, axis=0)
+        # meanDeltaWeights = np.mean(t, axis=0)
+
+        meanDeltaBiasV = tf.reduce_mean(v_0 - v_k, axis=0)
+        meanDeltaBiasH = tf.reduce_mean(h_0 - h_k, axis=0)
 
         lr = self.learning_rate / len(v_0)
         self.delta_bias_v = self.delta_bias_v * self.momentum + (1 - self.momentum) * meanDeltaBiasV
         self.delta_bias_h = self.delta_bias_h * self.momentum + (1 - self.momentum) * meanDeltaBiasH
         self.delta_weight_vh = self.delta_weight_vh * self.momentum + (1 - self.momentum) * meanDeltaWeights
 
-        self.bias_v += self.delta_bias_v * lr
-        self.weight_vh += self.delta_weight_vh * lr
-        self.bias_h += self.delta_bias_h * lr
+        self.bias_v.assign_add(self.delta_bias_v * lr)
+        self.weight_vh.assign_add(self.delta_weight_vh * lr)
+        self.bias_h.assign_add(self.delta_bias_h * lr)
 
-    def get_h_given_v(self, visible_minibatch):
+    # @tf.function
+    def get_h_given_v(self, betch):
         """Compute probabilities p(h|v) and activations h ~ p(h|v) 
 
         Uses undirected weight "weight_vh" and bias "bias_h"
@@ -179,12 +180,17 @@ class RestrictedBoltzmannMachine():
         assert self.weight_vh is not None
 
         # n_samples = visible_minibatch.shape[0]
-        res = np.matmul(visible_minibatch, self.weight_vh) + self.bias_h
+        # print(betch.dtype, self.weight_vh.dtype, self.bias_h.dtype)
+        # print(betch.shape, self.weight_vh.shape)
+        res = tf.matmul(betch, self.weight_vh) + self.bias_h
+        # print(res.dtype)
         probs = sigmoid(res)
+        # print(probs.dtype)
         return probs, sample_binary(probs)
 
         # return np.zeros((n_samples, self.ndim_hidden)), np.zeros((n_samples, self.ndim_hidden))
 
+    # @tf.function
     def get_v_given_h(self, hidden_minibatch):
 
         """Compute probabilities p(v|h) and activations v ~ p(v|h)
@@ -201,7 +207,8 @@ class RestrictedBoltzmannMachine():
         assert self.weight_vh is not None
 
         # n_samples = visible_minibatch.shape[0]
-
+        '''
+        '''
         if self.is_top:
 
             """
@@ -218,11 +225,11 @@ class RestrictedBoltzmannMachine():
 
         else:
 
-            # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass and zeros below)             
+            # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass and zeros below)
 
             pass
 
-        res = np.matmul(hidden_minibatch, self.weight_vh.T) + self.bias_v
+        res = tf.matmul(hidden_minibatch, tf.transpose(self.weight_vh)) + self.bias_v
         probs = sigmoid(res)
         return probs, sample_binary(probs)
 
@@ -338,15 +345,31 @@ class RestrictedBoltzmannMachine():
 
 
 if __name__ == '__main__':
-    visible = 4
-    hidden = 3
-    batchSize = 5
-    model = RestrictedBoltzmannMachine(visible, hidden)
-    print("Weights: ", model.weight_vh.shape)
-    randomStates = np.random.randint(0, 2, size=(batchSize, visible))
-    print(randomStates.shape)
 
-    hiddenState = model.get_h_given_v(randomStates)
-    print(hiddenState)
-    finalState = model.get_v_given_h(hiddenState)
-    print(finalState)
+    for b in range(0, numIterationsInBatch):
+        # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
+        # you may need to use the inference functions 'get_h_given_v' and 'get_v_given_h'.
+        # note that inference methods returns both probabilities and activations (samples from probablities) and you may have to decide when to use what.
+
+        dataBatch = visible_trainset[b * self.batch_size: (b + 1) * self.batch_size]
+        v1 = self.forwardAndUpdate(dataBatch)
+        epochLoss += UtilsEgen.meanReconstLoss(v1, dataBatch)
+        if (b % 10 == 0):
+            print("Loss({}/{}): {}".format(b, numIterationsInBatch, np.round(epochLoss / (b + 1), decimals=3)))
+
+        if (b >= 1000 and b % 1000 == 0):
+            print("Decreasing Learning rate")
+            self.learning_rate *= 0.9
+
+        # [TODO TASK 4.1] update the parameters using function 'update_params'
+
+        '''
+        if it % self.rf["period"] == 0 and self.is_bottom:
+            viz_rf(weights=self.weight_vh[:, self.rf["ids"]].reshape((self.image_size[0], self.image_size[1], -1)),
+                   it=it, grid=self.rf["grid"])
+
+        # print progress
+
+        if it % self.print_period == 0:
+            print("iteration=%7d recon_loss=%4.4f" % (it, np.linalg.norm(visible_trainset - visible_trainset)))
+        '''

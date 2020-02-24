@@ -1,5 +1,5 @@
-import numpy as np
 import tensorflow as tf
+import numpy as np
 
 
 def meanReconstLossTestSet(rbm, testSet):
@@ -9,7 +9,7 @@ def meanReconstLossTestSet(rbm, testSet):
 
 
 def meanReconstLoss(v0, v1):
-    return np.mean(np.sum(np.abs(v1 - v0), axis=1)) / len(v0[0])
+    return tf.reduce_mean(tf.reduce_sum(tf.abs(v1 - v0), axis=1))
 
 
 def energyAvg(visible, hidden, weights, biasV, biasH, matrixOps=True):

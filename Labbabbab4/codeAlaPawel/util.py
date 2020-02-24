@@ -1,3 +1,4 @@
+import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -13,7 +14,7 @@ def sigmoid(support):
       on_probabilities: shape is (size of mini-batch, size of layer)      
     """
 
-    on_probabilities = 1. / (1. + np.exp(-support))
+    on_probabilities = 1. / (1. + tf.exp(-support))
     return on_probabilities
 
 
@@ -40,8 +41,11 @@ def sample_binary(on_probabilities):
     Returns:
       activations: shape is (size of mini-batch, size of layer)      
     """
-
-    activations = 1. * (on_probabilities >= np.random.random_sample(size=on_probabilities.shape))
+    s = on_probabilities >= np.random.random_sample(size=on_probabilities.shape)
+    #print(s)
+    #print(tf.cast(s, dtype=tf.float32))
+    #activations = 1. * s
+    activations = tf.cast(s, dtype=tf.float32)
     return activations
 
 
