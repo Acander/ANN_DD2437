@@ -14,8 +14,8 @@ class RestrictedBoltzmannMachine():
     For more details : A Practical Guide to Training Restricted Boltzmann Machines https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
     '''
 
-    def __init__(self, ndim_visible, ndim_hidden, is_bottom=False, image_size=[28, 28], is_top=False, n_labels=10,
-                 batch_size=10):
+    def __init__(self, ndim_visible, ndim_hidden, is_bottom=False, image_size=(28, 28), is_top=False, n_labels=10,
+                 batch_size=10, learning_rate=0.01):
 
         """
         Args:
@@ -39,40 +39,28 @@ class RestrictedBoltzmannMachine():
         if is_top: self.n_labels = 10
 
         self.batch_size = batch_size
-
         self.delta_bias_v = 0
-
         self.delta_weight_vh = 0
-
         self.delta_bias_h = 0
-
         self.bias_v = np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible))
 
         self.weight_vh = np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden))
-
         self.bias_h = np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_hidden))
 
         self.delta_weight_v_to_h = 0
-
         self.delta_weight_h_to_v = 0
-
         self.weight_v_to_h = None
-
         self.weight_h_to_v = None
 
-        self.learning_rate = 0.01
-
+        self.learning_rate = learning_rate
         self.momentum = 0.7
 
         self.print_period = 5000
-
         self.rf = {  # receptive-fields. Only applicable when visible layer is input data
             "period": 5000,  # iteration period to visualize
             "grid": [5, 5],  # size of the grid
             "ids": np.random.randint(0, self.ndim_hidden, 25)  # pick some random hidden units
         }
-
-        return
 
     def cd1(self, visible_trainset, n_iterations=10000):
 
@@ -84,57 +72,49 @@ class RestrictedBoltzmannMachine():
         """
         # n_iterations = 10
         print("learning CD1")
-        visible_trainset = visible_trainset[0:10]
+        # visible_trainset = visible_trainset[:10]
         print("Converting to TF tensor")
         visible_trainset = tf.convert_to_tensor(visible_trainset)
 
         n_samples = visible_trainset.shape[0]
 
-        for it in range(n_iterations):
+        for epoch in range(n_iterations):
+            print("Epoch: {}/{}".format(epoch, n_iterations))
+            visible_trainset = tf.random.shuffle(visible_trainset)
+            epochLoss = 0
+            numIterationsInBatch = int(np.ceil(len(visible_trainset)) / self.batch_size)
+            for b in range(0, numIterationsInBatch):
+                # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
+                # you may need to use the inference functions 'get_h_given_v' and 'get_v_given_h'.
+                # note that inference methods returns both probabilities and activations (samples from probablities) and you may have to decide when to use what.
 
-            # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
-            # you may need to use the inference functions 'get_h_given_v' and 'get_v_given_h'.
-            # note that inference methods returns both probabilities and activations (samples from probablities) and you may have to decide when to use what.
-            ph0, h0 = self.get_h_given_v(visible_trainset)
-            pv1, v1 = self.get_v_given_h(h0)
-            ph1, h1 = self.get_h_given_v(v1)
+                dataBatch = visible_trainset[b * self.batch_size: (b + 1) * self.batch_size]
+                ph0, h0 = self.get_h_given_v(dataBatch)
+                pv1, v1 = self.get_v_given_h(h0)
+                ph1, h1 = self.get_h_given_v(v1)
+                epochLoss += UtilsEgen.meanReconstLoss(v1, dataBatch)
+                if (b % 10 == 0):
+                    print("Loss({}/{}): {}".format(b, numIterationsInBatch, np.round(epochLoss / (b + 1), decimals=3)))
 
-            self.batch_size = len(visible_trainset)
-            # print("Starting to calc. energy")
-            # energyPrev = UtilsEgen.energyAvg(visible_trainset, h0, self.weight_vh, self.bias_v, self.bias_h, matrixOps=False)
-            # energyPost = UtilsEgen.energyAvg(v1, h1, self.weight_vh, self.bias_v, self.bias_h, matrixOps=False)
-            # print("EnergyDiff:", energyPost - energyPrev)
+                if (b >= 1000 and b % 1000 == 0):
+                    print("Decreasing Learning rate")
+                    self.learning_rate *= 0.9
+                # [TODO TASK 4.1] update the parameters using function 'update_params'
+                self.update_params(dataBatch, h0, v1, h1)
+                # visualize once in a while when visible layer is input images
 
-            recLoss = UtilsEgen.meanReconstLoss(v1, visible_trainset)
-            print("Recloss:", recLoss)
-            '''
-            print("Starting to calc. energy")
-            energyPrev = UtilsEgen.energyAvg(visible_trainset, h0, self.weight_vh, self.bias_v, self.bias_h, matrixOps=True)
-            energyPost = UtilsEgen.energyAvg(v1, h1, self.weight_vh, self.bias_v, self.bias_h, matrixOps=True)
-            print("EnergyDiff:", energyPost - energyPrev)
-            '''
+                '''
+                if it % self.rf["period"] == 0 and self.is_bottom:
+                    viz_rf(weights=self.weight_vh[:, self.rf["ids"]].reshape((self.image_size[0], self.image_size[1], -1)),
+                           it=it, grid=self.rf["grid"])
+    
+                # print progress
+    
+                if it % self.print_period == 0:
+                    print("iteration=%7d recon_loss=%4.4f" % (it, np.linalg.norm(visible_trainset - visible_trainset)))
+                '''
 
-
-            # print(ph0.shape)
-            # kld = tf.keras.losses.KLD(ph0, ph1)
-            # mae = tf.losses.MAE(ph0, ph1)
-            # print(mae.shape)
-            # print(np.mean(mae))
-
-            # [TODO TASK 4.1] update the parameters using function 'update_params'
-            self.update_params(visible_trainset, h1, v1, h1)
-            # visualize once in a while when visible layer is input images
-
-            if it % self.rf["period"] == 0 and self.is_bottom:
-                viz_rf(weights=self.weight_vh[:, self.rf["ids"]].reshape((self.image_size[0], self.image_size[1], -1)),
-                       it=it, grid=self.rf["grid"])
-
-            # print progress
-
-            if it % self.print_period == 0:
-                print("iteration=%7d recon_loss=%4.4f" % (it, np.linalg.norm(visible_trainset - visible_trainset)))
-
-        return
+            print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
 
     def update_params(self, v_0, h_0, v_k, h_k):
 
@@ -152,44 +132,23 @@ class RestrictedBoltzmannMachine():
 
         # [TODO TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
 
-        # print(tf.transpose(v_0).shape, h_0.shape)
-        # v_0 = tf.transpose(v_0)
-        # input(t.shape)
+        # t = tf.matmul(tf.expand_dims(v_0 - v_k, axis=2), tf.expand_dims(h_0 - h_k, axis=1))
         t = tf.matmul(tf.expand_dims(v_0, axis=2), tf.expand_dims(h_0, axis=1))
+        t2 = tf.matmul(tf.expand_dims(v_k, axis=2), tf.expand_dims(h_k, axis=1))
+        t = t - t2
         meanDeltaWeights = np.mean(t, axis=0)
-        # print("****")
-        # print(tf.expand_dims(v_0, axis=2).shape, tf.expand_dims(h_0, axis=1).shape)
 
-        # print(h_0.shape, h_k.shape)
         meanDeltaBiasV = np.mean(v_0 - v_k, axis=0)
         meanDeltaBiasH = np.mean(h_0 - h_k, axis=0)
 
-        # print(meanDeltaBiasV.shape)
-        # print(meanDeltaBiasH.shape)
+        lr = self.learning_rate / len(v_0)
+        self.delta_bias_v = self.delta_bias_v * self.momentum + (1 - self.momentum) * meanDeltaBiasV
+        self.delta_bias_h = self.delta_bias_h * self.momentum + (1 - self.momentum) * meanDeltaBiasH
+        self.delta_weight_vh = self.delta_weight_vh * self.momentum + (1 - self.momentum) * meanDeltaWeights
 
-        '''
-        sumWeights = np.zeros(self.weight_vh.shape)
-        f = lambda x: np.expand_dims(x, axis=0)
-        for i in range(v_0.shape[0]):
-            print(i)
-            temp = f(v_0[i]).T @ f(h_0[i]) - f(v_k[i]).T @ f(h_k[i])
-            sumWeights += temp
-
-        sumWeights /= v_0.shape[0]  # Average the weight sum over the batch
-        '''
-        # print(sumWeights.shape)
-        # res = np.array(res)
-        # self.delta_bias_v += 0
-        # self.delta_weight_vh += 0
-        # self.delta_bias_h += 0
-
-        self.delta_bias_v = meanDeltaBiasV * self.learning_rate
-        self.delta_weight_vh = meanDeltaWeights * self.learning_rate * -1
-        self.delta_bias_h = meanDeltaBiasH * self.learning_rate
-
-        self.bias_v += self.delta_bias_v
-        self.weight_vh += self.delta_weight_vh
-        self.bias_h += self.delta_bias_h
+        self.bias_v += self.delta_bias_v * lr
+        self.weight_vh += self.delta_weight_vh * lr
+        self.bias_h += self.delta_bias_h * lr
 
     def get_h_given_v(self, visible_minibatch):
         """Compute probabilities p(h|v) and activations h ~ p(h|v) 

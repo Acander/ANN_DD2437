@@ -87,7 +87,7 @@ def read_mnist(dim=[28, 28], n_train=60000, n_test=1000):
 
     # new_path = os.path.relpath('..\\subfldr1\\testfile.txt', cur_path)
     # filePath = "/Labbabbab4/codeAlaPawel/"
-    filePath = cur_path + "\\"
+    filePath = cur_path + "/"
 
     train_imgs = load_idxfile(filePath + "train-images-idx3-ubyte")
     train_imgs = train_imgs / 255.
