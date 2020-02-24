@@ -80,7 +80,7 @@ class RestrictedBoltzmannMachine():
           visible_trainset: training data for this rbm, shape is (size of training set, size of visible layer)
           n_iterations: number of iterations of learning (each iteration learns a mini-batch)
         """
-
+        n_iterations = 10
         print("learning CD1")
         visible_trainset = visible_trainset[0:1000]
         print("Converting to TF tensor")
@@ -130,10 +130,17 @@ class RestrictedBoltzmannMachine():
 
         # print(tf.transpose(v_0).shape, h_0.shape)
         # v_0 = tf.transpose(v_0)
-        h_0 = tf.expand_dims(h_0, axis=1)
-        t = tf.matmul(tf.expand_dims(v_0, axis=2), h_0)
         # input(t.shape)
+        t = tf.matmul(tf.expand_dims(v_0, axis=2), tf.expand_dims(h_0, axis=1))
         meanDeltaWeights = np.mean(t, axis=0)
+
+        print(h_0.shape, h_k.shape)
+        meanDeltaBiasV = np.mean(v_0 - v_k, axis=0)
+        meanDeltaBiasH = np.mean(h_0 - h_k, axis=0)
+
+        print(meanDeltaBiasV.shape)
+        print(meanDeltaBiasH.shape)
+
         '''
         sumWeights = np.zeros(self.weight_vh.shape)
         f = lambda x: np.expand_dims(x, axis=0)
@@ -150,15 +157,13 @@ class RestrictedBoltzmannMachine():
         # self.delta_weight_vh += 0
         # self.delta_bias_h += 0
 
-        self.delta_bias_v = 0
-        self.delta_weight_vh = 0
-        self.delta_bias_h = 0
+        self.delta_bias_v = meanDeltaBiasV
+        self.delta_weight_vh = meanDeltaWeights
+        self.delta_bias_h = meanDeltaBiasH
 
         self.bias_v += self.delta_bias_v
         self.weight_vh += self.delta_weight_vh
         self.bias_h += self.delta_bias_h
-
-        return
 
     def get_h_given_v(self, visible_minibatch):
         """Compute probabilities p(h|v) and activations h ~ p(h|v) 
