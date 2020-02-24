@@ -2,8 +2,14 @@ import numpy as np
 import tensorflow as tf
 
 
+def meanReconstLossTestSet(rbm, testSet):
+    ph0, h0 = rbm.get_h_given_v(testSet)
+    pv1, v1 = rbm.get_v_given_h(h0)
+    return meanReconstLoss(testSet, v1)
+
+
 def meanReconstLoss(v0, v1):
-    return np.mean(np.sum(np.abs(v1 - v0), axis=1))
+    return np.mean(np.sum(np.abs(v1 - v0), axis=1)) / len(v0[0])
 
 
 def energyAvg(visible, hidden, weights, biasV, biasH, matrixOps=True):

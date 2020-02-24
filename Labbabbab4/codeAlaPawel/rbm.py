@@ -62,7 +62,7 @@ class RestrictedBoltzmannMachine():
             "ids": np.random.randint(0, self.ndim_hidden, 25)  # pick some random hidden units
         }
 
-    def cd1(self, visible_trainset, n_iterations=10000):
+    def cd1(self, visible_trainset, n_iterations=10000, testSet=None):
 
         """Contrastive Divergence with k=1 full alternating Gibbs sampling
 
@@ -78,10 +78,13 @@ class RestrictedBoltzmannMachine():
 
         n_samples = visible_trainset.shape[0]
 
+        trainLosses = []
+        testLosses = []
         for epoch in range(n_iterations):
             print("Epoch: {}/{}".format(epoch, n_iterations))
             visible_trainset = tf.random.shuffle(visible_trainset)
             epochLoss = 0
+            # epochLossTest = 0
             numIterationsInBatch = int(np.ceil(len(visible_trainset)) / self.batch_size)
             for b in range(0, numIterationsInBatch):
                 # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
@@ -93,6 +96,7 @@ class RestrictedBoltzmannMachine():
                 pv1, v1 = self.get_v_given_h(h0)
                 ph1, h1 = self.get_h_given_v(v1)
                 epochLoss += UtilsEgen.meanReconstLoss(v1, dataBatch)
+                # epochLossTest += UtilsEgen.meanReconstLossTestSet(v1, testSet)
                 if (b % 10 == 0):
                     print("Loss({}/{}): {}".format(b, numIterationsInBatch, np.round(epochLoss / (b + 1), decimals=3)))
 
@@ -114,7 +118,17 @@ class RestrictedBoltzmannMachine():
                     print("iteration=%7d recon_loss=%4.4f" % (it, np.linalg.norm(visible_trainset - visible_trainset)))
                 '''
 
-            print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
+            trainLoss = np.mean(epochLoss / numIterationsInBatch)
+            trainLosses.append(trainLoss)
+            print("Recloss:", np.round(trainLoss, decimals=3))
+            if testSet is not None:
+                testLoss = UtilsEgen.meanReconstLossTestSet(self, testSet)
+                testLosses.append(testLoss)
+                print("RecLossTest:", np.round(testLoss, decimals=3))
+
+        print(trainLosses)
+        if testSet is not None:
+            print(testLosses)
 
     def update_params(self, v_0, h_0, v_k, h_k):
 

@@ -16,4 +16,4 @@ if __name__ == '__main__':
                                      learning_rate=0.1
                                      )
 
-    rbm.cd1(visible_trainset=train_imgs, n_iterations=10000)
+    rbm.cd1(visible_trainset=train_imgs, n_iterations=20, testSet=test_imgs)
