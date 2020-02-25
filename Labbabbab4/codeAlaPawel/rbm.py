@@ -82,18 +82,12 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         testSetParts = self.divideIntoParts(testSet)
         print("Number of parts:", len(trainingSetParts))
 
-        trainLosses = []
-        testLosses = []
+        trainLosses = [UtilsEgen.meanReconstLossOnParts(self, testSetParts)]
+        testLosses = [UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)]
         for epoch in range(numEpochs):
             print("Epoch: {}/{}".format(epoch, numEpochs))
             visible_trainset = tf.random.shuffle(visible_trainset)
             epochStartTime = time.time()
-
-            print("Evaluating...")
-            testLosses.append(UtilsEgen.meanReconstLossOnParts(self, testSetParts))
-            trainLosses.append(UtilsEgen.meanReconstLossOnParts(self, trainingSetParts))
-            print("Test Loss:", testLosses[-1])
-            print("Training Loss:", trainLosses[-1])
 
             for p in trainingSetParts:
                 numIterationsInBatch = int(np.ceil(len(p)) / self.batch_size)
@@ -104,18 +98,24 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
                         print(loss)
 
             # print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
+            print("Evaluating...")
+            trainLosses.append([UtilsEgen.meanReconstLossOnParts(self, testSetParts)])
+            testLosses.append([UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)])
+            print("Test Loss:", testLosses[-1])
+            print("Training Loss:", trainLosses[-1])
+
             print("Epoch Time:", time.time() - epochStartTime)
             self.learning_rate = self.learning_rate * 0.99
 
-        with open("LastRunStatsNoProbLearning.json", 'w') as fp:
+        with open("RunStatsLearning500.json", 'w') as fp:
             json.dump({'TrainingLoss': trainLosses, 'TestLoss': testLosses}, fp)
 
-    @tf.function
+    # @tf.function
     def forwardAndUpdate(self, dataBatch):
         ph0, h0 = self.get_h_given_v(dataBatch)
         pv1, v1 = self.get_v_given_h(h0)
         ph1, h1 = self.get_h_given_v(v1)
-        self.update_params(dataBatch, h0, v1, h1)
+        self.update_params(dataBatch, h0, v1, ph1)
         return UtilsEgen.meanReconstLoss(dataBatch, v1)
 
     def update_params(self, v_0, h_0, v_k, h_k):

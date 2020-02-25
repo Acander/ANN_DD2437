@@ -4,7 +4,7 @@ import numpy as np
 
 def meanReconstLossOnParts(model, dataParts):
     sizes = [len(d) for d in dataParts]
-    losses = [meanReconstLossTestSet(model, d).numpy() for d in dataParts]
+    losses = [meanReconstLossTestSet(model, p).numpy() for p in dataParts]
     return np.sum(losses * (sizes / np.sum(sizes))) # Weighted average, by the length in each part
 
 
@@ -15,7 +15,7 @@ def meanReconstLossTestSet(rbm, testSet):
 
 
 def meanReconstLoss(v0, v1):
-    return tf.reduce_mean(tf.reduce_sum(tf.abs(v1 - v0), axis=1))
+    return tf.reduce_mean(tf.reduce_sum(tf.abs(v1 - v0), axis=1)) / v1.shape[1]
 
 
 def energyAvg(visible, hidden, weights, biasV, biasH, matrixOps=True):
