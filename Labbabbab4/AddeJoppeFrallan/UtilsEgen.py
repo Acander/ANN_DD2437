@@ -1,6 +1,7 @@
 import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
+from Labbabbab4.codeAlaPawel.util import viz_rf
 
 hToPlotIndices = None
 
@@ -43,11 +44,12 @@ def plotWeights(weights, epochId):
         # hToPlotIndices = [int(h) for h in hToPlotIndices]
 
     # if epoch % self.rf["period"] == 0 and self.is_bottom:
-    from Labbabbab4.codeAlaPawel.util import viz_rf
-    print(hToPlotIndices)
-    wToPlot = np.array([weights[:, h] for h in hToPlotIndices])
-    viz_rf(weights=wToPlot.reshape((image_size[0], image_size[1], -1)),
-           it=epochId, grid=[2, int(numToPlot/2)])
+    # print(hToPlotIndices)
+    # wToPlot = np.array([weights[:, h] for h in hToPlotIndices])
+    # print(wToPlot.shape)
+    wToPlotReshaped = weights.numpy()[:, hToPlotIndices].reshape((image_size[0], image_size[1], -1))
+    # print(wToPlotReshaped.shape)
+    viz_rf(weights=wToPlotReshaped, it=epochId+1, grid=[2, int(numToPlot/2)])
 
 
 def energyAvg(visible, hidden, weights, biasV, biasH, matrixOps=True):

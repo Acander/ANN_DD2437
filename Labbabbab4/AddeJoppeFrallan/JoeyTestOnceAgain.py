@@ -1,3 +1,4 @@
+from Labbabbab4.AddeJoppeFrallan import UtilsEgen
 from Labbabbab4.codeAlaPawel.util import *
 
 from Labbabbab4.codeAlaPawel.rbm import RestrictedBoltzmannMachine
@@ -26,6 +27,28 @@ def benchmark(model, trainImgs):
     print("Get V given H", timeit.timeit(f, number=50))
 
 
+def storeWeights(epochId, rbm):
+    biasV = rbm.getWeightsInNumpyByName("bias_v")
+    biasH = rbm.getWeightsInNumpyByName("bias_h")
+    weightsVH = rbm.getWeightsInNumpyByName("weight_vh")
+
+
+def testTrain(epochs):
+    # benchmark(rbm, train_imgs)
+    UtilsEgen.plotWeights(rbm.weight_vh, -1)
+    rbm.cd1(visible_trainset=train_imgs, testSet=test_imgs, numEpochs=epochs)
+    # loss = UtilsEgen.meanReconstLossTestSet(rbm, test_imgs)
+    # print(loss)
+
+
+def testLoad(epoch):
+    rbm.load_weights("weights/WeightsEpoch" + str(epoch))
+    # rbm.cd1(visible_trainset=train_imgs, testSet=test_imgs, numEpochs=1)
+    # loss = UtilsEgen.meanReconstLossTestSet(rbm, test_imgs)
+    # print(loss)
+    UtilsEgen.plotWeights(rbm.weight_vh.numpy(), epoch)
+
+
 if __name__ == '__main__':
     image_size = [28, 28]
     train_imgs, train_lbls, test_imgs, test_lbls = read_mnist(dim=image_size, n_train=60000, n_test=10000)
@@ -40,7 +63,8 @@ if __name__ == '__main__':
                                      learning_rate=0.1
                                      )
 
-    # benchmark(rbm, train_imgs)
-    #rbm.cd1(visible_trainset=train_imgs, testSet=test_imgs, numEpochs=1)
+    epochs = 21
+    testTrain(epochs)
+    # testLoad(epochs - 1)
     # print(rbm.variables)
-    print(rbm.getWeightsInNumpyByName("bias_v"))
+    # print(rbm.getWeightsInNumpyByName("bias_v"))
