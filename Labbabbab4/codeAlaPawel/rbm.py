@@ -13,7 +13,7 @@ import time, json
 class RestrictedBoltzmannMachine(tf.keras.Model):
 
     def __init__(self, ndim_visible, ndim_hidden, is_bottom=False, image_size=(28, 28), is_top=False, n_labels=10,
-                 batch_size=10, learning_rate=0.01):
+                 batch_size=10, learning_rate=0.01, *args, **kwargs):
 
         """
         Args:
@@ -26,6 +26,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
           batch_size: Size of mini-batch.
         """
 
+        super().__init__(*args, **kwargs)
         self.ndim_visible = ndim_visible
         self.ndim_hidden = ndim_hidden
         self.batch_size = batch_size
@@ -47,11 +48,13 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.bias_h = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_hidden)), "bias_h")
         self.weight_vh = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden)),
                            "weight_vh")
+        self.weight_v_to_h = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden)),
+                               "weight_v_to_h")
+        self.weight_h_to_v = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden)),
+                               "weight_h_to_v")
 
         self.delta_weight_v_to_h = g(0, "delta_weight_v_to_h")
         self.delta_weight_h_to_v = g(0, "delta_weight_h_to_v")
-        self.weight_v_to_h = None
-        self.weight_h_to_v = None
 
         self.learning_rate = g(learning_rate, "learning_rate")
         self.momentum = g(0.7, 'momentum')
@@ -61,6 +64,13 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
             "period": 5000,  # iteration period to visualize
             "grid": [5, 5],  # size of the grid
             "ids": np.random.randint(0, self.ndim_hidden, 25)  # pick some random hidden units
+        }
+        self.allVariables = {
+            'delta_bias_v': self.delta_bias_v, 'delta_bias_h': self.delta_bias_h,
+            'delta_weight_vh': self.delta_weight_vh,
+            'bias_v': self.bias_v, 'bias_h': self.bias_h, 'weight_vh': self.weight_vh,
+            'weight_v_to_h': self.weight_v_to_h, 'weight_h_to_v': self.weight_h_to_v,
+            'delta_weight_v_to_h': self.delta_weight_v_to_h, 'delta_weight_h_to_v': self.delta_weight_h_to_v,
         }
 
     def divideIntoParts(self, data, partSize=1000):
@@ -107,7 +117,9 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
             print("Epoch Time:", time.time() - epochStartTime)
             self.learning_rate = self.learning_rate * 0.99
 
-        with open("RunStatsLearning200.json", 'w') as fp:
+        self.save_weights("MyTestModel")
+
+        with open("RunStatsLearning500.json", 'w') as fp:
             json.dump({'TrainingLoss': trainLosses, 'TestLoss': testLosses}, fp)
 
     # @tf.function
@@ -344,3 +356,8 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.bias_h += self.delta_bias_h
 
         return
+
+    def getWeightsInNumpyByName(self, name):
+        for v in self.variables:
+            if (v.name[:-2] == name):
+                return v.numpy()

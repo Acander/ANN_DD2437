@@ -31,7 +31,7 @@ if __name__ == '__main__':
     train_imgs, train_lbls, test_imgs, test_lbls = read_mnist(dim=image_size, n_train=60000, n_test=10000)
 
     rbm = RestrictedBoltzmannMachine(ndim_visible=image_size[0] * image_size[1],
-                                     ndim_hidden=200,
+                                     ndim_hidden=500,
                                      is_bottom=True,
                                      image_size=image_size,
                                      is_top=False,
@@ -39,5 +39,8 @@ if __name__ == '__main__':
                                      batch_size=20,
                                      learning_rate=0.1
                                      )
+
     # benchmark(rbm, train_imgs)
-    rbm.cd1(visible_trainset=train_imgs, testSet=test_imgs, numEpochs=20)
+    #rbm.cd1(visible_trainset=train_imgs, testSet=test_imgs, numEpochs=1)
+    # print(rbm.variables)
+    print(rbm.getWeightsInNumpyByName("bias_v"))
