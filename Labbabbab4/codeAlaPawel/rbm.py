@@ -7,12 +7,10 @@ from Labbabbab4.AddeJoppeFrallan import UtilsEgen
 
 from Labbabbab4.codeAlaPawel.util import *
 import tensorflow as tf
+import time, json
 
 
 class RestrictedBoltzmannMachine(tf.keras.Model):
-    '''
-    For more details : A Practical Guide to Training Restricted Boltzmann Machines https://www.cs.toronto.edu/~hinton/absps/guideTR.pdf
-    '''
 
     def __init__(self, ndim_visible, ndim_hidden, is_bottom=False, image_size=(28, 28), is_top=False, n_labels=10,
                  batch_size=10, learning_rate=0.01):
@@ -30,30 +28,33 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
         self.ndim_visible = ndim_visible
         self.ndim_hidden = ndim_hidden
-        self.is_bottom = is_bottom
-
-        if is_bottom: self.image_size = image_size
-
-        self.is_top = is_top
-
-        if is_top: self.n_labels = 10
-
         self.batch_size = batch_size
-        self.delta_bias_v = 0
-        self.delta_weight_vh = 0
-        self.delta_bias_h = 0
-        self.bias_v = np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible))
 
-        self.weight_vh = np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden))
-        self.bias_h = np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_hidden))
+        self.is_bottom = is_bottom
+        self.is_top = is_top
+        if is_bottom:
+            self.image_size = image_size
+        if is_top:
+            self.n_labels = 10
 
-        self.delta_weight_v_to_h = 0
-        self.delta_weight_h_to_v = 0
+        f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
+        g = lambda x, n: tf.Variable(f(x), name=n)
+        self.delta_bias_v = g(0, "delta_bias_v")
+        self.delta_bias_h = g(0, "delta_bias_h")
+        self.delta_weight_vh = g(0, "delta_weight_vh")
+
+        self.bias_v = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible)), "bias_v")
+        self.bias_h = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_hidden)), "bias_h")
+        self.weight_vh = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden)),
+                           "weight_vh")
+
+        self.delta_weight_v_to_h = g(0, "delta_weight_v_to_h")
+        self.delta_weight_h_to_v = g(0, "delta_weight_h_to_v")
         self.weight_v_to_h = None
         self.weight_h_to_v = None
 
-        self.learning_rate = learning_rate
-        self.momentum = 0.7
+        self.learning_rate = g(learning_rate, "learning_rate")
+        self.momentum = g(0.7, 'momentum')
 
         self.print_period = 5000
         self.rf = {  # receptive-fields. Only applicable when visible layer is input data
@@ -62,7 +63,12 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
             "ids": np.random.randint(0, self.ndim_hidden, 25)  # pick some random hidden units
         }
 
-    def cd1(self, visible_trainset, n_iterations=10000, testSet=None):
+    def divideIntoParts(self, data, partSize=1000):
+        f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
+        numberOfParts = int(np.ceil(len(data)) / partSize)
+        return [f(data[i * partSize:(i + 1) * partSize]) for i in range(0, numberOfParts)]
+
+    def cd1(self, visible_trainset, testSet=None, numEpochs=10000):
 
         """Contrastive Divergence with k=1 full alternating Gibbs sampling
 
@@ -70,32 +76,26 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
           visible_trainset: training data for this rbm, shape is (size of training set, size of visible layer)
           n_iterations: number of iterations of learning (each iteration learns a mini-batch)
         """
-
         print("learning CD1")
-        print("Converting to TF tensor")
-        f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
-        g = lambda x, n: tf.Variable(tf.convert_to_tensor(x, dtype=tf.float32), name=n)
-        partSize = 1000
-        numberOfParts = int(np.ceil(len(visible_trainset)) / partSize)
-        datasetParts = [f(visible_trainset[i * partSize:(i + 1) * partSize]) for i in range(0, numberOfParts)]
-        print("Number of parts:", len(datasetParts))
 
-        self.weight_vh = g(self.weight_vh, "weight_vg")
-        self.bias_v = g(self.bias_v, "bias_v")
-        self.bias_h = g(self.bias_h, "bias_h")
-        self.delta_weight_vh = g(self.delta_weight_vh, "delta_weight_vh")
-        self.delta_bias_v = g(self.delta_bias_v, "delta_bias_v")
-        self.delta_bias_h = g(self.delta_bias_h, "delta_bias_h")
-        import time
+        trainingSetParts = self.divideIntoParts(visible_trainset)
+        testSetParts = self.divideIntoParts(testSet)
+        print("Number of parts:", len(trainingSetParts))
 
         trainLosses = []
         testLosses = []
-        for epoch in range(n_iterations):
-            print("Epoch: {}/{}".format(epoch, n_iterations))
+        for epoch in range(numEpochs):
+            print("Epoch: {}/{}".format(epoch, numEpochs))
             visible_trainset = tf.random.shuffle(visible_trainset)
             epochStartTime = time.time()
 
-            for p in datasetParts:
+            print("Evaluating...")
+            testLosses.append(UtilsEgen.meanReconstLossOnParts(self, testSetParts))
+            trainLosses.append(UtilsEgen.meanReconstLossOnParts(self, trainingSetParts))
+            print("Test Loss:", testLosses[-1])
+            print("Training Loss:", trainLosses[-1])
+
+            for p in trainingSetParts:
                 numIterationsInBatch = int(np.ceil(len(p)) / self.batch_size)
                 for b in range(0, numIterationsInBatch):
                     dataBatch = p[b * self.batch_size: (b + 1) * self.batch_size]
@@ -105,6 +105,10 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
             # print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
             print("Epoch Time:", time.time() - epochStartTime)
+            self.learning_rate = self.learning_rate * 0.99
+
+        with open("LastRunStatsNoProbLearning.json", 'w') as fp:
+            json.dump({'TrainingLoss': trainLosses, 'TestLoss': testLosses}, fp)
 
     @tf.function
     def forwardAndUpdate(self, dataBatch):
@@ -113,8 +117,6 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         ph1, h1 = self.get_h_given_v(v1)
         self.update_params(dataBatch, h0, v1, h1)
         return UtilsEgen.meanReconstLoss(dataBatch, v1)
-
-            print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
 
     def update_params(self, v_0, h_0, v_k, h_k):
 
@@ -342,34 +344,3 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.bias_h += self.delta_bias_h
 
         return
-
-
-if __name__ == '__main__':
-
-    for b in range(0, numIterationsInBatch):
-        # [TODO TASK 4.1] run k=1 alternating Gibbs sampling : v_0 -> h_0 ->  v_1 -> h_1.
-        # you may need to use the inference functions 'get_h_given_v' and 'get_v_given_h'.
-        # note that inference methods returns both probabilities and activations (samples from probablities) and you may have to decide when to use what.
-
-        dataBatch = visible_trainset[b * self.batch_size: (b + 1) * self.batch_size]
-        v1 = self.forwardAndUpdate(dataBatch)
-        epochLoss += UtilsEgen.meanReconstLoss(v1, dataBatch)
-        if (b % 10 == 0):
-            print("Loss({}/{}): {}".format(b, numIterationsInBatch, np.round(epochLoss / (b + 1), decimals=3)))
-
-        if (b >= 1000 and b % 1000 == 0):
-            print("Decreasing Learning rate")
-            self.learning_rate *= 0.9
-
-        # [TODO TASK 4.1] update the parameters using function 'update_params'
-
-        '''
-        if it % self.rf["period"] == 0 and self.is_bottom:
-            viz_rf(weights=self.weight_vh[:, self.rf["ids"]].reshape((self.image_size[0], self.image_size[1], -1)),
-                   it=it, grid=self.rf["grid"])
-
-        # print progress
-
-        if it % self.print_period == 0:
-            print("iteration=%7d recon_loss=%4.4f" % (it, np.linalg.norm(visible_trainset - visible_trainset)))
-        '''

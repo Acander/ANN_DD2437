@@ -2,6 +2,12 @@ import tensorflow as tf
 import numpy as np
 
 
+def meanReconstLossOnParts(model, dataParts):
+    sizes = [len(d) for d in dataParts]
+    losses = [meanReconstLossTestSet(model, d).numpy() for d in dataParts]
+    return np.sum(losses * (sizes / np.sum(sizes))) # Weighted average, by the length in each part
+
+
 def meanReconstLossTestSet(rbm, testSet):
     ph0, h0 = rbm.get_h_given_v(testSet)
     pv1, v1 = rbm.get_v_given_h(h0)

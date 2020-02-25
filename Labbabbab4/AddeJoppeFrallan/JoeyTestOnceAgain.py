@@ -39,5 +39,5 @@ if __name__ == '__main__':
                                      batch_size=20,
                                      learning_rate=0.1
                                      )
-    #benchmark(rbm, train_imgs)
-    rbm.cd1(visible_trainset=train_imgs, n_iterations=10000)
+    # benchmark(rbm, train_imgs)
+    rbm.cd1(visible_trainset=train_imgs, testSet=test_imgs, numEpochs=20)
