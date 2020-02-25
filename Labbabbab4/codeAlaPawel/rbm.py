@@ -107,7 +107,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
             print("Epoch Time:", time.time() - epochStartTime)
             self.learning_rate = self.learning_rate * 0.99
 
-        with open("RunStatsLearning500.json", 'w') as fp:
+        with open("RunStatsLearning200.json", 'w') as fp:
             json.dump({'TrainingLoss': trainLosses, 'TestLoss': testLosses}, fp)
 
     # @tf.function
