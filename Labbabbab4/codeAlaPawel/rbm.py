@@ -13,7 +13,7 @@ import time, json
 class RestrictedBoltzmannMachine(tf.keras.Model):
 
     def __init__(self, ndim_visible, ndim_hidden, is_bottom=False, image_size=(28, 28), is_top=False, n_labels=10,
-                 batch_size=10, learning_rate=0.01, *args, **kwargs):
+                 batch_size=10, learning_rate=0.1, *args, **kwargs):
 
         """
         Args:
@@ -78,7 +78,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         numberOfParts = int(np.ceil(len(data)) / partSize)
         return [f(data[i * partSize:(i + 1) * partSize]) for i in range(0, numberOfParts)]
 
-    def cd1(self, visible_trainset, testSet=None, numEpochs=10000):
+    def cd1(self, visible_trainset, testSet=(), numEpochs=10000):
 
         """Contrastive Divergence with k=1 full alternating Gibbs sampling
 
@@ -89,11 +89,15 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         print("learning CD1")
 
         trainingSetParts = self.divideIntoParts(visible_trainset)
-        testSetParts = self.divideIntoParts(testSet)
+        if (len(testSet) == 0):
+            testSetParts = self.divideIntoParts(testSet)
         print("Number of parts:", len(trainingSetParts))
 
-        trainLosses = [UtilsEgen.meanReconstLossOnParts(self, testSetParts)]
-        testLosses = [UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)]
+        if (len(testSet) == 0):
+            testLosses = [UtilsEgen.meanReconstLossOnParts(self, testSet)]
+        else:
+            testLosses = []
+        trainLosses = [UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)]
         for epoch in range(numEpochs):
             print("Epoch: {}/{}".format(epoch, numEpochs))
             visible_trainset = tf.random.shuffle(visible_trainset)
@@ -109,15 +113,15 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
             # print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
             print("Evaluating...")
-            trainLosses.append([UtilsEgen.meanReconstLossOnParts(self, testSetParts)])
-            testLosses.append([UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)])
-            print("Test Loss:", testLosses[-1])
+            trainLosses.append([UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)])
+            if (len(testSet) == 0):
+                testLosses.append([UtilsEgen.meanReconstLossOnParts(self, testSetParts)])
+                print("Test Loss:", testLosses[-1])
+
             print("Training Loss:", trainLosses[-1])
 
             print("Epoch Time:", time.time() - epochStartTime)
             self.learning_rate = self.learning_rate * 0.99
-
-        self.save_weights("MyTestModel")
 
         with open("RunStatsLearning500.json", 'w') as fp:
             json.dump({'TrainingLoss': trainLosses, 'TestLoss': testLosses}, fp)
@@ -192,14 +196,8 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         """
 
         assert self.weight_vh is not None
-
-        # n_samples = visible_minibatch.shape[0]
-        # print(betch.dtype, self.weight_vh.dtype, self.bias_h.dtype)
-        # print(betch.shape, self.weight_vh.shape)
         res = tf.matmul(betch, self.weight_vh) + self.bias_h
-        # print(res.dtype)
         probs = sigmoid(res)
-        # print(probs.dtype)
         return probs, sample_binary(probs)
 
         # return np.zeros((n_samples, self.ndim_hidden)), np.zeros((n_samples, self.ndim_hidden))
@@ -354,8 +352,6 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
         self.weight_v_to_h += self.delta_weight_v_to_h
         self.bias_h += self.delta_bias_h
-
-        return
 
     def getWeightsInNumpyByName(self, name):
         for v in self.variables:

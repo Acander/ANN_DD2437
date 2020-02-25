@@ -1,8 +1,9 @@
 from Labbabbab4.codeAlaPawel.util import *
 from Labbabbab4.codeAlaPawel.rbm import RestrictedBoltzmannMachine
+import tensorflow as tf
 
 
-class DeepBeliefNet():
+class DeepBeliefNet(tf.keras.Model):
     ''' 
     For more details : Hinton, Osindero, Teh (2006). A fast learning algorithm for deep belief nets. https://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
 
@@ -15,7 +16,7 @@ class DeepBeliefNet():
     vis : visible
     '''
 
-    def __init__(self, sizes, image_size, n_labels, batch_size):
+    def __init__(self, trainingStep, sizes, image_size=784, n_labels=10, batch_size=20, *args, **kwargs):
 
         """
         Args:
@@ -24,22 +25,23 @@ class DeepBeliefNet():
           n_labels: Number of label categories
           batch_size: Size of mini-batch
         """
+        super().__init__(*args, **kwargs)  # Super-Importanté
 
+        '''
+        '''
         self.rbm_stack = {
-
             'vis--hid': RestrictedBoltzmannMachine(ndim_visible=sizes["vis"], ndim_hidden=sizes["hid"],
                                                    is_bottom=True, image_size=image_size, batch_size=batch_size),
-
             'hid--pen': RestrictedBoltzmannMachine(ndim_visible=sizes["hid"], ndim_hidden=sizes["pen"],
                                                    batch_size=batch_size),
-
             'pen+lbl--top': RestrictedBoltzmannMachine(ndim_visible=sizes["pen"] + sizes["lbl"],
                                                        ndim_hidden=sizes["top"],
                                                        is_top=True, n_labels=n_labels, batch_size=batch_size)
         }
 
+        print(self.rbm_stack['hid--pen'].weight_vh)
+        self.trainingStep = trainingStep
         self.sizes = sizes
-
         self.image_size = image_size
         self.batch_size = batch_size
 
@@ -48,6 +50,8 @@ class DeepBeliefNet():
         self.n_gibbs_wakesleep = 5
 
         self.print_period = 2000
+
+        self.loadStackWeights(self.trainingStep)
 
     def recognize(self, true_img, true_lbl):
 
@@ -70,10 +74,7 @@ class DeepBeliefNet():
             pass
 
         predicted_lbl = np.zeros(true_lbl.shape)
-
         print("accuracy = %.2f%%" % (100. * np.mean(np.argmax(predicted_lbl, axis=1) == np.argmax(true_lbl, axis=1))))
-
-        return
 
     def generate(self, true_lbl, name):
 
@@ -105,8 +106,6 @@ class DeepBeliefNet():
 
         anim = stitch_video(fig, records).save("%s.generate%d.mp4" % (name, np.argmax(true_lbl)))
 
-        return
-
     def train_greedylayerwise(self, vis_trainset, lbl_trainset, n_iterations):
 
         """
@@ -118,27 +117,34 @@ class DeepBeliefNet():
 
         # [TODO TASK 4.2] use CD-1 to train all RBMs greedily
 
-        print("training vis--hid")
-        """ 
-        CD-1 training for vis--hid 
-        """
-        self.savetofile_rbm(loc="trained_rbm", name="vis--hid")
+        # CD-1 training for vis--hid
+        if (self.trainingStep > 0):
+            print("Skipping Pretraining of RBM Layer-0")
+        else:
+            print("training vis--hid")
+            self.rbm_stack['vis--hid'].cd1(vis_trainset, numEpochs=n_iterations)
+            self.rbm_stack["vis--hid"].untwine_weights()
+            self.trainingStep = 1
+            self.rbm_stack['vis--hid'].save_weights("DBN-RBM-0-Weights")
 
-        print("training hid--pen")
-        self.rbm_stack["vis--hid"].untwine_weights()
-        """ 
-        CD-1 training for hid--pen 
-        """
-        self.savetofile_rbm(loc="trained_rbm", name="hid--pen")
+        # CD-1 training for hid--pen
+        if (self.trainingStep > 1):
+            print("Skipping Pretraining of RBM Layer-1")
+        else:
+            print("training hid--pen")
+            for i in range(n_iterations):
+                data = self.rbm_stack['vis--hid'].get_h_given_v(vis_trainset)
+                self.rbm_stack['hid--pen'].cd1(data, numEpochs=1)
+
+            self.rbm_stack["hid--pen"].untwine_weights()
+            self.trainingStep = 2
+            self.rbm_stack['hid--pen'].save_weights("DBN-RBM-1-Weights")
 
         print("training pen+lbl--top")
         self.rbm_stack["hid--pen"].untwine_weights()
         """ 
         CD-1 training for pen+lbl--top 
         """
-        self.savetofile_rbm(loc="trained_rbm", name="pen+lbl--top")
-
-    def customLayerPreTraining(self):
 
     def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations):
 
@@ -183,40 +189,17 @@ class DeepBeliefNet():
 
                 if it % self.print_period == 0: print("iteration=%7d" % it)
 
-            self.savetofile_dbn(loc="trained_dbn", name="vis--hid")
-            self.savetofile_dbn(loc="trained_dbn", name="hid--pen")
-            self.savetofile_rbm(loc="trained_dbn", name="pen+lbl--top")
+    def loadStackWeights(self, trainingStep):
+        if (trainingStep <= 0):
+            print("Pre-loading nothing")
+            return
 
-        return
-
-    def loadfromfile_rbm(self, loc, name):
-
-        self.rbm_stack[name].weight_vh = np.load("%s/rbm.%s.weight_vh.npy" % (loc, name))
-        self.rbm_stack[name].bias_v = np.load("%s/rbm.%s.bias_v.npy" % (loc, name))
-        self.rbm_stack[name].bias_h = np.load("%s/rbm.%s.bias_h.npy" % (loc, name))
-        print("loaded rbm[%s] from %s" % (name, loc))
-        return
-
-    def savetofile_rbm(self, loc, name):
-
-        np.save("%s/rbm.%s.weight_vh" % (loc, name), self.rbm_stack[name].weight_vh)
-        np.save("%s/rbm.%s.bias_v" % (loc, name), self.rbm_stack[name].bias_v)
-        np.save("%s/rbm.%s.bias_h" % (loc, name), self.rbm_stack[name].bias_h)
-        return
-
-    def loadfromfile_dbn(self, loc, name):
-
-        self.rbm_stack[name].weight_v_to_h = np.load("%s/dbn.%s.weight_v_to_h.npy" % (loc, name))
-        self.rbm_stack[name].weight_h_to_v = np.load("%s/dbn.%s.weight_h_to_v.npy" % (loc, name))
-        self.rbm_stack[name].bias_v = np.load("%s/dbn.%s.bias_v.npy" % (loc, name))
-        self.rbm_stack[name].bias_h = np.load("%s/dbn.%s.bias_h.npy" % (loc, name))
-        print("loaded rbm[%s] from %s" % (name, loc))
-        return
-
-    def savetofile_dbn(self, loc, name):
-
-        np.save("%s/dbn.%s.weight_v_to_h" % (loc, name), self.rbm_stack[name].weight_v_to_h)
-        np.save("%s/dbn.%s.weight_h_to_v" % (loc, name), self.rbm_stack[name].weight_h_to_v)
-        np.save("%s/dbn.%s.bias_v" % (loc, name), self.rbm_stack[name].bias_v)
-        np.save("%s/dbn.%s.bias_h" % (loc, name), self.rbm_stack[name].bias_h)
-        return
+        if (trainingStep > 0):
+            print("Loading RBN-Layer-0 Weights")
+            self.rbm_stack['vis--hid'].load_weights("DBN-RBM-0-Weights")
+        if (trainingStep > 1):
+            print("Loading RBN-Layer-1 Weights")
+            self.rbm_stack['hid--pen'].load_weights("DBN-RBM-1-Weights")
+        if (trainingStep > 2):
+            print("Loading RBN-Layer-2 Weights")
+            self.rbm_stack['pen+lbl--top'].load_weights("DBN-RBM-2-Weights")
