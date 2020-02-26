@@ -108,7 +108,7 @@ class DeepBeliefNet(tf.keras.Model):
 
     def train_greedylayerwise(self, vis_trainset, lbl_trainset, n_iterations):
         f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
-        #vis_trainset = f(vis_trainset)
+        # vis_trainset = f(vis_trainset)
         # CD-1 training for vis--hid
         if (self.trainingStep > 0):
             print("Skipping Pretraining of RBM Layer-0")
@@ -135,6 +135,20 @@ class DeepBeliefNet(tf.keras.Model):
         """ 
         CD-1 training for pen+lbl--top 
         """
+
+    def propagateToFinalRBM(self, inData):
+        ph0, h0 = self.rbm_stack['vis--hid'].get_h_given_v(inData)
+        return self.rbm_stack['hid--pen'].get_h_given_v(h0)
+
+    def propagateFromFinalRBM(self, data):
+        pv1, v1 = self.rbm_stack['hid--pen'].get_v_given_h(data)
+        return self.rbm_stack['vis--hid'].get_v_given_h(v1)
+
+    def preTrainFinalLayer(self, inData, labels, finalRBM, numIterations):
+        #TODO use PropagateToFinalRBM function to generate data for final layer, than extend with the labels
+        # Then perform gibbs on final. REMEBER to re-propagate the data every iteration
+        pass
+
 
     def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations):
 
