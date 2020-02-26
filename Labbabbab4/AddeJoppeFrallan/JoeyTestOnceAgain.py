@@ -63,7 +63,7 @@ if __name__ == '__main__':
                                      learning_rate=0.1
                                      )
 
-    epochs = 21
+    epochs = 20
     testTrain(epochs)
     # testLoad(epochs - 1)
     # print(rbm.variables)

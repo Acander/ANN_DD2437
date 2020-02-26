@@ -1,0 +1,2 @@
+model_checkpoint_path: "DBN-RBM-1-Weights"
+all_model_checkpoint_paths: "DBN-RBM-1-Weights"

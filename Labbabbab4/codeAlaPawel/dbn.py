@@ -31,15 +31,15 @@ class DeepBeliefNet(tf.keras.Model):
         '''
         self.rbm_stack = {
             'vis--hid': RestrictedBoltzmannMachine(ndim_visible=sizes["vis"], ndim_hidden=sizes["hid"],
-                                                   is_bottom=True, image_size=image_size, batch_size=batch_size),
+                                                   is_bottom=True, image_size=image_size, batch_size=batch_size,
+                                                   name="First"),
             'hid--pen': RestrictedBoltzmannMachine(ndim_visible=sizes["hid"], ndim_hidden=sizes["pen"],
-                                                   batch_size=batch_size),
+                                                   batch_size=batch_size, name="Second"),
             'pen+lbl--top': RestrictedBoltzmannMachine(ndim_visible=sizes["pen"] + sizes["lbl"],
                                                        ndim_hidden=sizes["top"],
-                                                       is_top=True, n_labels=n_labels, batch_size=batch_size)
+                                                       is_top=True, n_labels=n_labels, batch_size=batch_size,
+                                                       name="Third")
         }
-
-        print(self.rbm_stack['hid--pen'].weight_vh)
         self.trainingStep = trainingStep
         self.sizes = sizes
         self.image_size = image_size
@@ -107,16 +107,8 @@ class DeepBeliefNet(tf.keras.Model):
         anim = stitch_video(fig, records).save("%s.generate%d.mp4" % (name, np.argmax(true_lbl)))
 
     def train_greedylayerwise(self, vis_trainset, lbl_trainset, n_iterations):
-
-        """
-        Args:
-          vis_trainset: visible data shaped (size of training set, size of visible layer)
-          lbl_trainset: label data shaped (size of training set, size of label layer)
-          n_iterations: number of iterations of learning (each iteration learns a mini-batch)
-        """
-
-        # [TODO TASK 4.2] use CD-1 to train all RBMs greedily
-
+        f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
+        #vis_trainset = f(vis_trainset)
         # CD-1 training for vis--hid
         if (self.trainingStep > 0):
             print("Skipping Pretraining of RBM Layer-0")
@@ -124,7 +116,6 @@ class DeepBeliefNet(tf.keras.Model):
             print("training vis--hid")
             self.rbm_stack['vis--hid'].cd1(vis_trainset, numEpochs=n_iterations)
             self.rbm_stack["vis--hid"].untwine_weights()
-            self.trainingStep = 1
             self.rbm_stack['vis--hid'].save_weights("DBN-RBM-0-Weights")
 
         # CD-1 training for hid--pen
@@ -133,15 +124,14 @@ class DeepBeliefNet(tf.keras.Model):
         else:
             print("training hid--pen")
             for i in range(n_iterations):
-                data = self.rbm_stack['vis--hid'].get_h_given_v(vis_trainset)
+                data = self.rbm_stack['vis--hid'].get_h_given_v(f(vis_trainset))[1]
                 self.rbm_stack['hid--pen'].cd1(data, numEpochs=1)
 
             self.rbm_stack["hid--pen"].untwine_weights()
-            self.trainingStep = 2
             self.rbm_stack['hid--pen'].save_weights("DBN-RBM-1-Weights")
 
-        print("training pen+lbl--top")
-        self.rbm_stack["hid--pen"].untwine_weights()
+        # print("training pen+lbl--top")
+        # self.rbm_stack["hid--pen"].untwine_weights()
         """ 
         CD-1 training for pen+lbl--top 
         """

@@ -13,7 +13,7 @@ import time, json
 class RestrictedBoltzmannMachine(tf.keras.Model):
 
     def __init__(self, ndim_visible, ndim_hidden, is_bottom=False, image_size=(28, 28), is_top=False, n_labels=10,
-                 batch_size=10, learning_rate=0.1, *args, **kwargs):
+                 batch_size=10, learning_rate=0.1, name="", *args, **kwargs):
 
         """
         Args:
@@ -30,6 +30,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.ndim_visible = ndim_visible
         self.ndim_hidden = ndim_hidden
         self.batch_size = batch_size
+        self.rbName = name
 
         self.is_bottom = is_bottom
         self.is_top = is_top
@@ -48,16 +49,19 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.bias_h = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_hidden)), "bias_h")
         self.weight_vh = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden)),
                            "weight_vh")
-        self.weight_v_to_h = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden)),
+        self.weight_v_to_h = g(np.zeros((self.ndim_visible, self.ndim_hidden)),
                                "weight_v_to_h")
-        self.weight_h_to_v = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible, self.ndim_hidden)),
-                               "weight_h_to_v")
+        self.weight_h_to_v = g(np.zeros((self.ndim_visible, self.ndim_hidden)), "weight_h_to_v")
+        self.hasUntwinedWeights = tf.Variable(False, name="HasUntwined")
 
         self.delta_weight_v_to_h = g(0, "delta_weight_v_to_h")
         self.delta_weight_h_to_v = g(0, "delta_weight_h_to_v")
 
         self.learning_rate = g(learning_rate, "learning_rate")
         self.momentum = g(0.7, 'momentum')
+
+        self.testLosses = []
+        self.trainLosses = []
 
         self.print_period = 5000
         self.rf = {  # receptive-fields. Only applicable when visible layer is input data
@@ -89,15 +93,14 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         print("learning CD1")
 
         trainingSetParts = self.divideIntoParts(visible_trainset)
-        if (len(testSet) == 0):
+        if (len(testSet) != 0):
             testSetParts = self.divideIntoParts(testSet)
         print("Number of parts:", len(trainingSetParts))
 
-        if (len(testSet) == 0):
-            testLosses = [UtilsEgen.meanReconstLossOnParts(self, testSet)]
-        else:
-            testLosses = []
-        trainLosses = [UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)]
+        if (len(testSet) != 0):
+            self.testLosses.append(UtilsEgen.meanReconstLossOnParts(self, testSetParts))
+        self.trainLosses.append(UtilsEgen.meanReconstLossOnParts(self, trainingSetParts))
+
         for epoch in range(numEpochs):
             print("Epoch: {}/{}".format(epoch, numEpochs))
             visible_trainset = tf.random.shuffle(visible_trainset)
@@ -113,18 +116,21 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
             # print("Recloss:", np.round(np.mean(epochLoss / numIterationsInBatch), decimals=3))
             print("Evaluating...")
-            trainLosses.append([UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)])
-            if (len(testSet) == 0):
-                testLosses.append([UtilsEgen.meanReconstLossOnParts(self, testSetParts)])
-                print("Test Loss:", testLosses[-1])
+            self.trainLosses.append([UtilsEgen.meanReconstLossOnParts(self, trainingSetParts)])
+            if (len(testSet) != 0):
+                self.testLosses.append([UtilsEgen.meanReconstLossOnParts(self, testSetParts)])
+                print("Test Loss:", self.testLosses[-1])
 
-            print("Training Loss:", trainLosses[-1])
+            print("Training Loss:", self.trainLosses[-1])
 
             print("Epoch Time:", time.time() - epochStartTime)
             self.learning_rate = self.learning_rate * 0.99
+            # UtilsEgen.plotWeights(self.weight_vh, epoch)
 
-        with open("RunStatsLearning500.json", 'w') as fp:
-            json.dump({'TrainingLoss': trainLosses, 'TestLoss': testLosses}, fp)
+        with open("RunStatsLearning-{}.json".format(self.rbName), 'w') as fp:
+            json.dump({'TrainingLoss': self.trainLosses, 'TestLoss': self.testLosses}, fp)
+        '''
+        '''
 
     # @tf.function
     def forwardAndUpdate(self, dataBatch):
@@ -135,41 +141,11 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         return UtilsEgen.meanReconstLoss(dataBatch, v1)
 
     def update_params(self, v_0, h_0, v_k, h_k):
-
-        """Update the weight and bias parameters.
-
-        You could also add weight decay and momentum for weight updates.
-
-        Args:
-           v_0: activities or probabilities of visible layer (data to the rbm)
-           h_0: activities or probabilities of hidden layer
-           v_k: activities or probabilities of visible layer
-           h_k: activities or probabilities of hidden layer
-           all args have shape (size of mini-batch, size of respective layer)
-        """
-
-        # [TODO TASK 4.1] get the gradients from the arguments (replace the 0s below) and update the weight and bias parameters
-
-        # t = tf.matmul(tf.expand_dims(v_0 - v_k, axis=2), tf.expand_dims(h_0 - h_k, axis=1))
-        # print(v_0.dtype, h_0.dtype)
-
         t = tf.matmul(tf.expand_dims(v_0, axis=2), tf.expand_dims(h_0, axis=1))
         t2 = tf.matmul(tf.expand_dims(v_k, axis=2), tf.expand_dims(h_k, axis=1))
         t = t - t2
 
-        '''
-        self.bench *= 0
-        self.bench2 *= 0
-        f = lambda x, y: tf.matmul(tf.expand_dims(x, axis=1), tf.expand_dims(y, axis=0))
-        for i in range(len(v_0)):
-            self.bench += f(tf.transpose(v_0[i]), h_0[i])
-            self.bench2 += f(tf.transpose(v_k[i]), h_k[i])
-
-        t = self.bench / len(v_0) - self.bench2 / len(v_0)
-        '''
         meanDeltaWeights = tf.reduce_mean(t, axis=0)
-        # meanDeltaWeights = np.mean(t, axis=0)
-
         meanDeltaBiasV = tf.reduce_mean(v_0 - v_k, axis=0)
         meanDeltaBiasH = tf.reduce_mean(h_0 - h_k, axis=0)
 
@@ -184,73 +160,31 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
     # @tf.function
     def get_h_given_v(self, betch):
-        """Compute probabilities p(h|v) and activations h ~ p(h|v) 
-
-        Uses undirected weight "weight_vh" and bias "bias_h"
-        
-        Args: 
-           visible_minibatch: shape is (size of mini-batch, size of visible layer)
-        Returns:        
-           tuple ( p(h|v) , h) 
-           both are shaped (size of mini-batch, size of hidden layer)
-        """
-
-        assert self.weight_vh is not None
-        res = tf.matmul(betch, self.weight_vh) + self.bias_h
-        probs = sigmoid(res)
-        return probs, sample_binary(probs)
-
-        # return np.zeros((n_samples, self.ndim_hidden)), np.zeros((n_samples, self.ndim_hidden))
+        if (self.hasUntwinedWeights):
+            res = tf.matmul(betch, self.weight_h_to_v) + self.bias_h
+            probs = sigmoid(res)
+            return probs, sample_binary(probs)
+        else:
+            res = tf.matmul(betch, self.weight_vh) + self.bias_h
+            probs = sigmoid(res)
+            return probs, sample_binary(probs)
 
     # @tf.function
     def get_v_given_h(self, hidden_minibatch):
-
-        """Compute probabilities p(v|h) and activations v ~ p(v|h)
-
-        Uses undirected weight "weight_vh" and bias "bias_v"
-        
-        Args: 
-           hidden_minibatch: shape is (size of mini-batch, size of hidden layer)
-        Returns:        
-           tuple ( p(v|h) , v) 
-           both are shaped (size of mini-batch, size of visible layer)
-        """
-
-        assert self.weight_vh is not None
-
-        # n_samples = visible_minibatch.shape[0]
-        '''
-        '''
-        if self.is_top:
-
-            """
-            Here visible layer has both data and labels. Compute total input for each unit (identical for both cases), \ 
-            and split into two parts, something like support[:, :-self.n_labels] and support[:, -self.n_labels:]. \
-            Then, for both parts, use the appropriate activation function to get probabilities and a sampling method \
-            to get activities. The probabilities as well as activities can then be concatenated back into a normal visible layer.
-            """
-
-            # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass below). \
-            # Note that this section can also be postponed until TASK 4.2, since in this task, stand-alone RBMs do not contain labels in visible layer.
-
-            pass
-
+        if (self.hasUntwinedWeights):
+            res = tf.matmul(hidden_minibatch, tf.transpose(self.weight_h_to_v)) + self.bias_v
+            probs = sigmoid(res)
+            return probs, sample_binary(probs)
         else:
-
-            # [TODO TASK 4.1] compute probabilities and activations (samples from probabilities) of visible layer (replace the pass and zeros below)
-
-            pass
-
-        res = tf.matmul(hidden_minibatch, tf.transpose(self.weight_vh)) + self.bias_v
-        probs = sigmoid(res)
-        return probs, sample_binary(probs)
-
-    """ rbm as a belief layer : the functions below do not have to be changed until running a deep belief net """
+            res = tf.matmul(hidden_minibatch, tf.transpose(self.weight_vh)) + self.bias_v
+            probs = sigmoid(res)
+            return probs, sample_binary(probs)
 
     def untwine_weights(self):
-        self.weight_v_to_h = np.copy(self.weight_vh)
-        self.weight_h_to_v = np.copy(np.transpose(self.weight_vh))
-        self.weight_vh = None
+        self.weight_v_to_h.assign(self.weight_vh)
+        self.weight_h_to_v.assign(self.weight_vh)
+        self.hasUntwinedWeights.assign(True)
+        # self.weight_vh = None
 
     def get_h_given_v_dir(self, visible_minibatch):
 
