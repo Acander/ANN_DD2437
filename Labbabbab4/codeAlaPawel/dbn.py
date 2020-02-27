@@ -191,7 +191,7 @@ class DeepBeliefNet(tf.keras.Model):
             v = tf.concat([v, labels], axis=1)
 
             topRBM.cd1(v, numEpochs=1)
-            self.recognize(inData[0:1000], labels[0:1000])
+            # self.recognize(inData[0:1000], labels[0:1000])
 
     def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations, numGibbsIterations):
 
@@ -209,25 +209,25 @@ class DeepBeliefNet(tf.keras.Model):
         print(rbm0.weight_v_to_h)
         rbm1 = self.rbm_stack['hid--pen']
         rbm2 = self.rbm_stack['pen+lbl--top']
-        trainingSetParts = rbm0.divideIntoParts(vis_trainset)
-        labelParts = rbm0.divideIntoParts(lbl_trainset)
+        trainingSetParts = rbm0.divideIntoParts(vis_trainset, 500)
+        labelParts = rbm0.divideIntoParts(lbl_trainset, 500)
 
         for it in range(n_iterations):
             print("Iteration: ", it)
             for partIndex in range(len(trainingSetParts)):
+                print(partIndex, "/", len(trainingSetParts))
                 trainPart, labelPart = trainingSetParts[partIndex], labelParts[partIndex]
 
                 ph0, h0 = rbm0.get_h_given_v(trainPart)
                 ph1, h1 = rbm1.get_h_given_v(h0)
 
                 v2 = tf.identity(h1)
-                v2 = tf.concat([v2, labelPart], axis=1) # Add correct labels 
-                print(v2.shape)
+                v2 = tf.concat([v2, labelPart], axis=1)  # Add correct labels
                 for i in range(numGibbsIterations):  # Should one perform K-gibbs sampling here?
                     ph2, h2 = rbm2.get_h_given_v(v2)
                     pv2, v2 = rbm2.get_v_given_h(h2)
 
-                v2 = v2[:, :-10] # Remove the label nodes afterwards
+                v2 = v2[:, :-10]  # Remove the label nodes afterwards
 
                 pv1, v1 = rbm1.get_v_given_h(v2)
                 pv0, v0 = rbm0.get_v_given_h(v1)
@@ -241,11 +241,10 @@ class DeepBeliefNet(tf.keras.Model):
                 # Sleep training
                 ph1T, h1T = rbm1.get_h_given_v(v1)
                 rbm1.update_recognize_params(v1, v2, ph1T)
-                ph0T, h0T = rbm1.get_h_given_v(v0)
+                ph0T, h0T = rbm0.get_h_given_v(v0)
                 rbm0.update_recognize_params(v0, v1, ph0T)
 
-
-
+            self.recognize(vis_trainset, lbl_trainset)
             # [TODO TASK 4.3] wake-phase : drive the network bottom to top using fixing the visible and label data.
 
             # [TODO TASK 4.3] alternating Gibbs sampling in the top RBM for k='n_gibbs_wakesleep' steps, also store neccessary information for learning this RBM.
@@ -264,9 +263,9 @@ class DeepBeliefNet(tf.keras.Model):
         print("Loop finished")
 
     def loadStackWeights(self, trainingStep):
-        if (trainingStep <= 0):
-            print("Pre-loading nothing")
-            return
+        #if (trainingStep <= 0):
+        #    print("Pre-loading nothing")
+        #    return
 
         if (trainingStep > 0):
             print("Loading RBN-Layer-0 Weights")
@@ -278,3 +277,18 @@ class DeepBeliefNet(tf.keras.Model):
         if (trainingStep > 2):
             print("Loading RBN-Layer-2 Weights")
             self.rbm_stack['pen+lbl--top'].load_weights("DBN-RBM-2-Weights")
+
+        #Fixing previous bug
+        self.rbm_stack['vis--hid'].fixDeltaWeights()
+        self.rbm_stack['hid--pen'].fixDeltaWeights()
+        self.rbm_stack['pen+lbl--top'].fixDeltaWeights()
+
+    def saveAllWeights(self, baseFileName):
+        keys = ['vis--hid', 'hid--pen', 'pen+lbl--top']
+        for i, k in enumerate(keys):
+            self.rbm_stack[k].save_weights(baseFileName.format(i))
+
+    def loadAllWeights(self, baseFileName):
+        keys = ['vis--hid', 'hid--pen', 'pen+lbl--top']
+        for i, k in enumerate(keys):
+            self.rbm_stack[k].load_weights(baseFileName.format(i))

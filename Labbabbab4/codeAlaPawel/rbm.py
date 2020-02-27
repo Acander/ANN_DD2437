@@ -13,7 +13,7 @@ import time, json
 class RestrictedBoltzmannMachine(tf.keras.Model):
 
     def __init__(self, ndim_visible, ndim_hidden, is_bottom=False, image_size=(28, 28), is_top=False, n_labels=10,
-                 batch_size=10, learning_rate=0.1, name="", *args, **kwargs):
+                 batch_size=10, learning_rate=0.05, name="", *args, **kwargs):
 
         """
         Args:
@@ -54,8 +54,8 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.weight_h_to_v = g(np.zeros((self.ndim_visible, self.ndim_hidden)), "weight_h_to_v")
         self.hasUntwinedWeights = tf.Variable(False, name="HasUntwined")
 
-        self.delta_weight_v_to_h = g(0, "delta_weight_v_to_h")
-        self.delta_weight_h_to_v = g(0, "delta_weight_h_to_v")
+        self.delta_weight_v_to_h = g(np.zeros((self.ndim_visible, self.ndim_hidden)), "delta_weight_v_to_h")
+        self.delta_weight_h_to_v = g(np.zeros((self.ndim_visible, self.ndim_hidden)), "delta_weight_h_to_v")
 
         self.learning_rate = g(learning_rate, "learning_rate")
         self.momentum = g(0.7, 'momentum')
@@ -92,9 +92,9 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         """
         print("learning CD1")
 
-        trainingSetParts = self.divideIntoParts(visible_trainset)
+        trainingSetParts = self.divideIntoParts(visible_trainset, 250)
         if (len(testSet) != 0):
-            testSetParts = self.divideIntoParts(testSet)
+            testSetParts = self.divideIntoParts(testSet, 250)
         print("Number of parts:", len(trainingSetParts))
 
         if (len(testSet) != 0):
@@ -125,11 +125,12 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
             print("Epoch Time:", time.time() - epochStartTime)
             self.learning_rate = self.learning_rate * 0.99
+            print("New Learning Rate", self.learning_rate)
             # UtilsEgen.plotWeights(self.weight_vh, epoch)
 
+        '''
         with open("RunStatsLearning-{}.json".format(self.rbName), 'w') as fp:
             json.dump({'TrainingLoss': self.trainLosses, 'TestLoss': self.testLosses}, fp)
-        '''
         '''
 
     # @tf.function
@@ -264,25 +265,32 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
     '''
 
     def update_generate_params(self, inps, trgs, preds):
-
         """Update generative weight "weight_h_to_v" and bias "bias_v"
         
         Args:
-           inps: activities or probabilities of input unit
-           trgs: activities or probabilities of output unit (target)
-           preds: activities or probabilities of output unit (prediction)
+           inps: activities or probabilities of input unit -> X
+           trgs: activities or probabilities of output unit (target) -> Y
+           preds: activities or probabilities of output unit (prediction) -> Ỹ
            all args have shape (size of mini-batch, size of respective layer)
         """
 
-        # [TODO TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
+        # print("X:", inps.shape)
+        # print("Y:", trgs.shape)
+        # print("Y2:", preds.shape)
+        # print("Weights:", self.weight_h_to_v.shape)
+        deltaActv = trgs - preds
+        # print("DeltaActv:", deltaActv.shape)
+        deltaW = tf.matmul(tf.expand_dims(deltaActv, axis=2), tf.expand_dims(inps, axis=1))
+        deltaW = tf.reduce_mean(deltaW, axis=0)
+        # print("DeltaW:", deltaW.shape)
 
-        self.delta_weight_h_to_v += 0
-        self.delta_bias_v += 0
+        # print(self.delta_bias_v.shape)
+        lr = self.learning_rate
+        self.delta_weight_h_to_v.assign_add(deltaW * lr)
+        self.delta_bias_v.assign_add(tf.reduce_mean(deltaActv, axis=0) * lr)
 
-        self.weight_h_to_v += self.delta_weight_h_to_v
-        self.bias_v += self.delta_bias_v
-
-        return
+        self.weight_h_to_v = self.weight_h_to_v + self.delta_weight_h_to_v
+        self.bias_v = self.bias_v + self.delta_bias_v
 
     def update_recognize_params(self, inps, trgs, preds):
 
@@ -297,13 +305,32 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
         # [TODO TASK 4.3] find the gradients from the arguments (replace the 0s below) and update the weight and bias parameters.
 
-        self.delta_weight_v_to_h += 0
-        self.delta_bias_h += 0
+        # print("X:", inps.shape)
+        # print("Y:", trgs.shape)
+        # print("Y2:", preds.shape)
+        # print("Weights:", self.weight_h_to_v.shape)
+        deltaActv = trgs - preds
+        # print("DeltaActv:", deltaActv.shape)
+        deltaW = tf.matmul(tf.expand_dims(deltaActv, axis=2), tf.expand_dims(inps, axis=1))
+        deltaW = tf.reduce_mean(deltaW, axis=0)
+        # print("DeltaW:", deltaW.shape)
 
-        self.weight_v_to_h += self.delta_weight_v_to_h
-        self.bias_h += self.delta_bias_h
+        lr = self.learning_rate
+        print(lr)
+        self.delta_weight_v_to_h.assign_add(tf.transpose(deltaW)*lr)
+        self.delta_bias_h.assign_add(tf.reduce_mean(deltaActv, axis=0)*lr)
+
+        self.weight_v_to_h.assign_add(self.delta_weight_v_to_h*lr)
+        self.bias_h = self.bias_h + self.delta_bias_h*lr
 
     def getWeightsInNumpyByName(self, name):
         for v in self.variables:
             if (v.name[:-2] == name):
                 return v.numpy()
+
+    def fixDeltaWeights(self):
+        f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
+        g = lambda x, n: tf.Variable(f(x), name=n)
+        self.delta_bias_v = g(np.zeros(self.ndim_visible), "delta_bias_v")
+        self.delta_bias_h = g(np.zeros(self.ndim_hidden), "delta_bias_h")
+        self.delta_weight_vh = g(np.zeros((self.ndim_visible, self.ndim_hidden)), "delta_weight_vh")
