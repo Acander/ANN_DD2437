@@ -224,13 +224,25 @@ class DeepBeliefNet(tf.keras.Model):
                 v2 = tf.concat([v2, labelPart], axis=1) # Add correct labels 
                 print(v2.shape)
                 for i in range(numGibbsIterations):  # Should one perform K-gibbs sampling here?
-                    ph3, h3 = rbm2.get_h_given_v(v2)
-                    pv3, v2 = rbm2.get_v_given_h(h3)
+                    ph2, h2 = rbm2.get_h_given_v(v2)
+                    pv2, v2 = rbm2.get_v_given_h(h2)
 
                 v2 = v2[:, :-10] # Remove the label nodes afterwards
 
                 pv1, v1 = rbm1.get_v_given_h(v2)
                 pv0, v0 = rbm0.get_v_given_h(v1)
+
+                # Wake training
+                pv0T, v0T = rbm0.get_v_given_h(h0)
+                rbm0.update_generate_params(h0, trainPart, pv0T)
+                pv1T, v1T = rbm1.get_v_given_h(h1)
+                rbm1.update_generate_params(h1, h0, pv1T)
+
+                # Sleep training
+                ph1T, h1T = rbm1.get_h_given_v(v1)
+                rbm1.update_recognize_params(v1, v2, ph1T)
+                ph0T, h0T = rbm1.get_h_given_v(v0)
+                rbm0.update_recognize_params(v0, v1, ph0T)
 
 
 
