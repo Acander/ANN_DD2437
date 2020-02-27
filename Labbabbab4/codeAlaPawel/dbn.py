@@ -78,11 +78,6 @@ class DeepBeliefNet(tf.keras.Model):
         for _ in range(self.n_gibbs_recog):
             ph, h = topRBM.get_h_given_v(v)
             pv, v = topRBM.get_v_given_h(h)
-            # lblNeurons = v[:, -10:]
-            # print(v[0:2, -10:])
-            # print(pv[0:2, -10:])
-            # tf.nn.softmax(lblNeurons)
-            # print(lblNeurons.shape)
 
         # predicted_lbl = np.zeros(true_lbl.shape)
         lblNeurons = v[:, -10:].numpy()
@@ -126,11 +121,6 @@ class DeepBeliefNet(tf.keras.Model):
 
         images = []
         for i in range(self.n_gibbs_gener):
-            # for j in range(n_sample):
-            #     for k in range(10):
-            #        if v[j][-10 + k] != lbl[j][k]:
-            #            print("ERROR")
-            # print(v[0][-10:])
             ph, h = topRBM.get_h_given_v(v)
             pv, v = topRBM.get_v_given_h(h)
 
@@ -144,9 +134,6 @@ class DeepBeliefNet(tf.keras.Model):
             '''
             visP, vis = self.propagateFromFinalRBM(v[:, :-10])
             images.append(vis)
-
-            # records.append([ax.imshow(vis.reshape((28, 28)), cmap="bwr", vmin=0, vmax=1, animated=True,
-            #                           interpolation=None)])
 
         print("Generating:", np.argmax(lbl[imageToShow]))
         # ANIMATION DID NOT WORK ON MY COMPUTER => YOLO
@@ -183,12 +170,11 @@ class DeepBeliefNet(tf.keras.Model):
             self.rbm_stack["hid--pen"].untwine_weights()
             self.rbm_stack['hid--pen'].save_weights("DBN-RBM-1-Weights")
 
-        # print("training pen+lbl--top")
-        # self.rbm_stack["hid--pen"].untwine_weights()
         """ 
         CD-1 training for pen+lbl--top 
         """
         self.preTrainFinalLayer(f(vis_trainset), lbl_trainset, n_iterations)
+        self.rbm_stack["pen+lbl--top"].save_weights("DBN-RBM-2-Weights")
 
     def propagateToFinalRBM(self, inData):
         ph0, h0 = self.rbm_stack['vis--hid'].get_h_given_v(inData)
@@ -199,25 +185,18 @@ class DeepBeliefNet(tf.keras.Model):
         return self.rbm_stack['vis--hid'].get_v_given_h(v1)
 
     def preTrainFinalLayer(self, inData, labels, numIterations):
-        # TODO use PropagateToFinalRBM function to generate data for final layer, than extend with the labels
-        # Then perform gibbs on final. REMEMBER to re-propagate the data every iteration
         topRBM = self.rbm_stack['pen+lbl--top']
         for epoch in range(numIterations):
-            # prop and concatenate "new dataset" each epoch
             pv, v = self.propagateToFinalRBM(inData)
             v = tf.concat([v, labels], axis=1)
 
             topRBM.cd1(v, numEpochs=1)
             self.recognize(inData[0:1000], labels[0:1000])
 
-        topRBM.save_weights("DBN-RBM-2-Weights")
-
     def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations):
 
         """
-        Wake-sleep method for learning all the parameters of network. 
-        First tries to load previous saved parameters of the entire network.
-
+        Wake-sleep method for learning all the parameters of network.
         Args:
           vis_trainset: visible data shaped (size of training set, size of visible layer)
           lbl_trainset: label data shaped (size of training set, size of label layer)
@@ -225,35 +204,49 @@ class DeepBeliefNet(tf.keras.Model):
         """
 
         print("\ntraining wake-sleep..")
+        self.n_samples = vis_trainset.shape[0]
+        rbm0 = self.rbm_stack['vis--hid']
+        print(rbm0.weight_v_to_h)
+        rbm1 = self.rbm_stack['hid--pen']
+        rbm2 = self.rbm_stack['pen+lbl--top']
+        trainingSetParts = rbm0.divideIntoParts(vis_trainset)
+        labelParts = rbm0.divideIntoParts(lbl_trainset)
 
-        try:
+        for it in range(n_iterations):
+            print("Iteration: ", it)
+            for partIndex in range(len(trainingSetParts)):
+                trainPart, labelPart = trainingSetParts[partIndex], labelParts[partIndex]
 
-            self.loadfromfile_dbn(loc="trained_dbn", name="vis--hid")
-            self.loadfromfile_dbn(loc="trained_dbn", name="hid--pen")
-            self.loadfromfile_rbm(loc="trained_dbn", name="pen+lbl--top")
+                ph0, h0 = rbm0.get_h_given_v(trainPart)
+                ph1, h1 = rbm1.get_h_given_v(h0)
 
-        except IOError:
+                v2 = tf.identity(h1)
+                print(v2.shape)
+                for i in range(10):  # Should one perform K-gibbs sampling here?
+                    v2 = tf.concat([v2, labelPart], axis=1)
+                    ph3, h3 = rbm2.get_h_given_v(v2)
+                    pv3, v2 = rbm2.get_v_given_h(h3)
+                    v2 = v2[:, :-10]
 
-            self.n_samples = vis_trainset.shape[0]
+                pv1, v1 = rbm1.get_v_given_h(v2)
+                pv0, v0 = rbm0.get_v_given_h(v1)
 
-            for it in range(n_iterations):
+            # [TODO TASK 4.3] wake-phase : drive the network bottom to top using fixing the visible and label data.
 
-                # [TODO TASK 4.3] wake-phase : drive the network bottom to top using fixing the visible and label data.
+            # [TODO TASK 4.3] alternating Gibbs sampling in the top RBM for k='n_gibbs_wakesleep' steps, also store neccessary information for learning this RBM.
 
-                # [TODO TASK 4.3] alternating Gibbs sampling in the top RBM for k='n_gibbs_wakesleep' steps, also store neccessary information for learning this RBM.
+            # [TODO TASK 4.3] sleep phase : from the activities in the top RBM, drive the network top to bottom.
 
-                # [TODO TASK 4.3] sleep phase : from the activities in the top RBM, drive the network top to bottom.
+            # [TODO TASK 4.3] compute predictions : compute generative predictions from wake-phase activations, and recognize predictions from sleep-phase activations.
+            # Note that these predictions will not alter the network activations, we use them only to learn the directed connections.
 
-                # [TODO TASK 4.3] compute predictions : compute generative predictions from wake-phase activations, and recognize predictions from sleep-phase activations.
-                # Note that these predictions will not alter the network activations, we use them only to learn the directed connections.
+            # [TODO TASK 4.3] update generative parameters : here you will only use 'update_generate_params' method from rbm class.
 
-                # [TODO TASK 4.3] update generative parameters : here you will only use 'update_generate_params' method from rbm class.
+            # [TODO TASK 4.3] update parameters of top rbm : here you will only use 'update_params' method from rbm class.
 
-                # [TODO TASK 4.3] update parameters of top rbm : here you will only use 'update_params' method from rbm class.
+            # [TODO TASK 4.3] update generative parameters : here you will only use 'update_recognize_params' method from rbm class.
 
-                # [TODO TASK 4.3] update generative parameters : here you will only use 'update_recognize_params' method from rbm class.
-
-                if it % self.print_period == 0: print("iteration=%7d" % it)
+        print("Loop finished")
 
     def loadStackWeights(self, trainingStep):
         if (trainingStep <= 0):
@@ -263,6 +256,7 @@ class DeepBeliefNet(tf.keras.Model):
         if (trainingStep > 0):
             print("Loading RBN-Layer-0 Weights")
             self.rbm_stack['vis--hid'].load_weights("DBN-RBM-0-Weights")
+            print(self.rbm_stack['vis--hid'].weight_v_to_h)
         if (trainingStep > 1):
             print("Loading RBN-Layer-1 Weights")
             self.rbm_stack['hid--pen'].load_weights("DBN-RBM-1-Weights")

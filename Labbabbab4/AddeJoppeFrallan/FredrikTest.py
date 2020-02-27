@@ -8,4 +8,6 @@ if __name__ == '__main__':
     dbn = DeepBeliefNet(3, {'vis': 784, 'hid': 500, 'pen': 500, 'top': 2000, 'lbl': 10})
     # dbn.train_greedylayerwise(train_imgs, train_lbls, 20)
     # dbn.recognize(test_imgs, test_lbls)
-    dbn.generate(test_lbls[0:1], "lol")
+    #dbn.generate(test_lbls[0:1], "lol")
+
+    dbn.train_wakesleep_finetune(train_imgs, train_lbls, 10)
