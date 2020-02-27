@@ -3,7 +3,7 @@ import os
 # os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 from Labbabbab4.AddeJoppeFrallan import UtilsEgen
 
-# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from Labbabbab4.codeAlaPawel.util import *
 import tensorflow as tf
@@ -13,7 +13,7 @@ import time, json
 class RestrictedBoltzmannMachine(tf.keras.Model):
 
     def __init__(self, ndim_visible, ndim_hidden, is_bottom=False, image_size=(28, 28), is_top=False, n_labels=10,
-                 batch_size=10, learning_rate=0.05, name="", *args, **kwargs):
+                 batch_size=10, learning_rate=0.1, name="", *args, **kwargs):
 
         """
         Args:
@@ -150,6 +150,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         meanDeltaBiasV = tf.reduce_mean(v_0 - v_k, axis=0)
         meanDeltaBiasH = tf.reduce_mean(h_0 - h_k, axis=0)
 
+        #print(meanDeltaBiasV)
         lr = self.learning_rate / len(v_0)
         self.delta_bias_v = self.delta_bias_v * self.momentum + (1 - self.momentum) * meanDeltaBiasV
         self.delta_bias_h = self.delta_bias_h * self.momentum + (1 - self.momentum) * meanDeltaBiasH
@@ -285,12 +286,45 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         # print("DeltaW:", deltaW.shape)
 
         # print(self.delta_bias_v.shape)
-        lr = self.learning_rate
+        #lr = self.learning_rate
+        lr = 0.01
         self.delta_weight_h_to_v.assign_add(deltaW * lr)
         self.delta_bias_v.assign_add(tf.reduce_mean(deltaActv, axis=0) * lr)
 
         self.weight_h_to_v = self.weight_h_to_v + self.delta_weight_h_to_v
         self.bias_v = self.bias_v + self.delta_bias_v
+
+    def calcDelta(self, inps, trgs, preds):
+        deltaActv = trgs - preds
+        deltaW = tf.matmul(tf.expand_dims(deltaActv, axis=2), tf.expand_dims(inps, axis=1))
+        return tf.reduce_mean(deltaW, axis=0), tf.reduce_mean(deltaActv, axis=0)
+
+    def applyRecognizeDeltas(self, deltas):
+        deltaW = [d[0] for d in deltas]
+        deltaActvs = [d[1] for d in deltas]
+        deltaW = tf.reduce_mean(tf.convert_to_tensor(deltaW), axis=0)
+        deltaActvs = tf.reduce_mean(tf.convert_to_tensor(deltaActvs), axis=0)
+
+        lr = self.learning_rate
+        self.delta_weight_v_to_h.assign_add(tf.transpose(deltaW) * lr)
+        self.delta_bias_h.assign_add(deltaActvs * lr)
+
+        self.weight_v_to_h.assign_add(self.delta_weight_v_to_h * lr)
+        self.bias_h = self.bias_h + self.delta_bias_h * lr
+
+    def applyGenerativeDeltas(self, deltas):
+        deltaW = [d[0] for d in deltas]
+        deltaActvs = [d[1] for d in deltas]
+        deltaW = tf.reduce_mean(tf.convert_to_tensor(deltaW), axis=0)
+        deltaActvs = tf.reduce_mean(tf.convert_to_tensor(deltaActvs), axis=0)
+
+        lr = self.learning_rate
+        self.delta_weight_h_to_v.assign_add(deltaW * lr)
+        self.delta_bias_v.assign_add(deltaActvs * lr)
+
+        self.weight_h_to_v = self.weight_h_to_v + self.delta_weight_h_to_v
+        self.bias_v = self.bias_v + self.delta_bias_v
+
 
     def update_recognize_params(self, inps, trgs, preds):
 
@@ -315,13 +349,14 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         deltaW = tf.reduce_mean(deltaW, axis=0)
         # print("DeltaW:", deltaW.shape)
 
-        lr = self.learning_rate
-        print(lr)
-        self.delta_weight_v_to_h.assign_add(tf.transpose(deltaW)*lr)
-        self.delta_bias_h.assign_add(tf.reduce_mean(deltaActv, axis=0)*lr)
+        #lr = self.learning_rate
+        lr = 0.01
+        #print(lr)
+        self.delta_weight_v_to_h.assign_add(tf.transpose(deltaW) * lr)
+        self.delta_bias_h.assign_add(tf.reduce_mean(deltaActv, axis=0) * lr)
 
-        self.weight_v_to_h.assign_add(self.delta_weight_v_to_h*lr)
-        self.bias_h = self.bias_h + self.delta_bias_h*lr
+        self.weight_v_to_h.assign_add(self.delta_weight_v_to_h * lr)
+        self.bias_h = self.bias_h + self.delta_bias_h * lr
 
     def getWeightsInNumpyByName(self, name):
         for v in self.variables:

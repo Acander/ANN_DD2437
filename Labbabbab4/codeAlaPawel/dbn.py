@@ -209,11 +209,13 @@ class DeepBeliefNet(tf.keras.Model):
         print(rbm0.weight_v_to_h)
         rbm1 = self.rbm_stack['hid--pen']
         rbm2 = self.rbm_stack['pen+lbl--top']
-        trainingSetParts = rbm0.divideIntoParts(vis_trainset, 500)
-        labelParts = rbm0.divideIntoParts(lbl_trainset, 500)
+        trainingSetParts = rbm0.divideIntoParts(vis_trainset, 10000)
+        labelParts = rbm0.divideIntoParts(lbl_trainset, 10000)
 
         for it in range(n_iterations):
             print("Iteration: ", it)
+            rbm0Deltas = [[], []]
+            rbm1Deltas = [[], []]
             for partIndex in range(len(trainingSetParts)):
                 print(partIndex, "/", len(trainingSetParts))
                 trainPart, labelPart = trainingSetParts[partIndex], labelParts[partIndex]
@@ -223,9 +225,14 @@ class DeepBeliefNet(tf.keras.Model):
 
                 v2 = tf.identity(h1)
                 v2 = tf.concat([v2, labelPart], axis=1)  # Add correct labels
+                firstV2 = tf.identity(v2)
                 for i in range(numGibbsIterations):  # Should one perform K-gibbs sampling here?
                     ph2, h2 = rbm2.get_h_given_v(v2)
                     pv2, v2 = rbm2.get_v_given_h(h2)
+                    if (i == 0):
+                        firstH2 = tf.identity(h2)
+                    if (i == numGibbsIterations - 2):
+                        lastV2 = tf.identity(v2)
 
                 v2 = v2[:, :-10]  # Remove the label nodes afterwards
 
@@ -235,14 +242,34 @@ class DeepBeliefNet(tf.keras.Model):
                 # Wake training
                 pv0T, v0T = rbm0.get_v_given_h(h0)
                 rbm0.update_generate_params(h0, trainPart, pv0T)
+                # rbm0Deltas[0].append(rbm0.calcDelta(h0, trainPart, pv0T))
                 pv1T, v1T = rbm1.get_v_given_h(h1)
                 rbm1.update_generate_params(h1, h0, pv1T)
+                # rbm1Deltas[0].append(rbm1.calcDelta(h1, h0, pv1T))
 
                 # Sleep training
                 ph1T, h1T = rbm1.get_h_given_v(v1)
                 rbm1.update_recognize_params(v1, v2, ph1T)
+                # rbm1Deltas[1].append(rbm1.calcDelta(v1, v2, ph1T))
                 ph0T, h0T = rbm0.get_h_given_v(v0)
                 rbm0.update_recognize_params(v0, v1, ph0T)
+                # rbm0Deltas[1].append(rbm0.calcDelta(v0, v1, ph0T))
+
+                # print(firstV2.shape)
+                # print(firstH2.shape)
+                # print(lastV2.shape)
+                # print(ph2.shape)
+                # print(rbm2.delta_bias_v)
+                # print(rbm2.delta_bias_h)
+                rbm2.update_params(firstV2, firstH2, lastV2, ph2)
+
+            '''
+            rbm0.applyRecognizeDeltas(rbm0Deltas[1])
+            rbm0.applyGenerativeDeltas(rbm0Deltas[0])
+
+            rbm1.applyRecognizeDeltas(rbm1Deltas[1])
+            rbm1.applyGenerativeDeltas(rbm1Deltas[0])
+            '''
 
             self.recognize(vis_trainset, lbl_trainset)
             # [TODO TASK 4.3] wake-phase : drive the network bottom to top using fixing the visible and label data.
@@ -263,25 +290,30 @@ class DeepBeliefNet(tf.keras.Model):
         print("Loop finished")
 
     def loadStackWeights(self, trainingStep):
-        #if (trainingStep <= 0):
+        # if (trainingStep <= 0):
         #    print("Pre-loading nothing")
         #    return
+        baseDir = "Labbabbab4/AddeJoppeFrallan/"
 
-        if (trainingStep > 0):
-            print("Loading RBN-Layer-0 Weights")
-            self.rbm_stack['vis--hid'].load_weights("DBN-RBM-0-Weights")
-            print(self.rbm_stack['vis--hid'].weight_v_to_h)
-        if (trainingStep > 1):
-            print("Loading RBN-Layer-1 Weights")
-            self.rbm_stack['hid--pen'].load_weights("DBN-RBM-1-Weights")
-        if (trainingStep > 2):
-            print("Loading RBN-Layer-2 Weights")
-            self.rbm_stack['pen+lbl--top'].load_weights("DBN-RBM-2-Weights")
-
-        #Fixing previous bug
         self.rbm_stack['vis--hid'].fixDeltaWeights()
         self.rbm_stack['hid--pen'].fixDeltaWeights()
         self.rbm_stack['pen+lbl--top'].fixDeltaWeights()
+
+        if (trainingStep > 0):
+            print("Loading RBN-Layer-0 Weights")
+            self.rbm_stack['vis--hid'].load_weights(baseDir + "DBN-RBM-0-Weights")
+            print(self.rbm_stack['vis--hid'].weight_v_to_h)
+        if (trainingStep > 1):
+            print("Loading RBN-Layer-1 Weights")
+            self.rbm_stack['hid--pen'].load_weights(baseDir + "DBN-RBM-1-Weights")
+        if (trainingStep > 2):
+            print("Loading RBN-Layer-2 Weights")
+            self.rbm_stack['pen+lbl--top'].load_weights(baseDir + "DBN-RBM-2-Weights")
+
+        self.rbm_stack['vis--hid'].fixDeltaWeights()
+        self.rbm_stack['hid--pen'].fixDeltaWeights()
+        self.rbm_stack['pen+lbl--top'].fixDeltaWeights()
+        # Fixing previous bug
 
     def saveAllWeights(self, baseFileName):
         keys = ['vis--hid', 'hid--pen', 'pen+lbl--top']
