@@ -193,7 +193,7 @@ class DeepBeliefNet(tf.keras.Model):
             topRBM.cd1(v, numEpochs=1)
             self.recognize(inData[0:1000], labels[0:1000])
 
-    def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations):
+    def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations, numGibbsIterations):
 
         """
         Wake-sleep method for learning all the parameters of network.
@@ -221,15 +221,18 @@ class DeepBeliefNet(tf.keras.Model):
                 ph1, h1 = rbm1.get_h_given_v(h0)
 
                 v2 = tf.identity(h1)
+                v2 = tf.concat([v2, labelPart], axis=1) # Add correct labels 
                 print(v2.shape)
-                for i in range(10):  # Should one perform K-gibbs sampling here?
-                    v2 = tf.concat([v2, labelPart], axis=1)
+                for i in range(numGibbsIterations):  # Should one perform K-gibbs sampling here?
                     ph3, h3 = rbm2.get_h_given_v(v2)
                     pv3, v2 = rbm2.get_v_given_h(h3)
-                    v2 = v2[:, :-10]
+
+                v2 = v2[:, :-10] # Remove the label nodes afterwards
 
                 pv1, v1 = rbm1.get_v_given_h(v2)
                 pv0, v0 = rbm0.get_v_given_h(v1)
+
+
 
             # [TODO TASK 4.3] wake-phase : drive the network bottom to top using fixing the visible and label data.
 
