@@ -45,7 +45,7 @@ class DeepBeliefNet(tf.keras.Model):
         self.image_size = image_size
         self.batch_size = batch_size
 
-        self.n_gibbs_recog = 15
+        self.n_gibbs_recog = 20
         self.n_gibbs_gener = 200
         self.n_gibbs_wakesleep = 5
 
@@ -58,10 +58,11 @@ class DeepBeliefNet(tf.keras.Model):
         """Recognize/Classify the data into label categories and calculate the accuracy
 
         Args:
-          true_imgs: visible data shaped (number of samples, size of visible layer)
+          true_img: visible data shaped (number of samples, size of visible layer)
           true_lbl: true labels shaped (number of samples, size of label layer). Used only for calculating accuracy, not driving the net
         """
 
+        f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
         n_samples = true_img.shape[0]
         vis = true_img  # visible layer gets the image data
         lbl = np.ones(true_lbl.shape) / 10.  # start the net by telling you know nothing about labels
@@ -70,13 +71,27 @@ class DeepBeliefNet(tf.keras.Model):
         # and read out the labels (replace pass below and 'predicted_lbl' to your predicted labels).
         # NOTE : inferring entire train/test set may require too much compute memory (depends on your system). In that case, divide into mini-batches.
 
-        for _ in range(self.n_gibbs_recog):
-            pass
+        pv, v = self.propagateToFinalRBM(f(vis))
+        v = tf.concat([v, lbl], axis=1)
+        topRBM = self.rbm_stack['pen+lbl--top']
 
-        predicted_lbl = np.zeros(true_lbl.shape)
+        for _ in range(self.n_gibbs_recog):
+            ph, h = topRBM.get_h_given_v(v)
+            pv, v = topRBM.get_v_given_h(h)
+            # lblNeurons = v[:, -10:]
+            # print(v[0:2, -10:])
+            # print(pv[0:2, -10:])
+            # tf.nn.softmax(lblNeurons)
+            # print(lblNeurons.shape)
+
+        # predicted_lbl = np.zeros(true_lbl.shape)
+        lblNeurons = v[:, -10:].numpy()
+        predicted_lbl = lblNeurons
+        # predicted_lbl = np.argmax(lblNeurons, axis=1)
         print("accuracy = %.2f%%" % (100. * np.mean(np.argmax(predicted_lbl, axis=1) == np.argmax(true_lbl, axis=1))))
 
-    def generate(self, true_lbl, name):
+    # Generates images for all passed in, but shows only the one specified in argument. NICE
+    def generate(self, true_lbl, name, imageToShow=0):
 
         """Generate data from labels
 
@@ -85,26 +100,64 @@ class DeepBeliefNet(tf.keras.Model):
           name: string used for saving a video of generated visible activations
         """
 
+        # f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
         n_sample = true_lbl.shape[0]
 
-        records = []
+        # records = []
         fig, ax = plt.subplots(1, 1, figsize=(3, 3))
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
-        ax.set_xticks([]);
+        ax.set_xticks([])
         ax.set_yticks([])
 
         lbl = true_lbl
 
+        initV = tf.random.uniform((n_sample, 784), minval=0, maxval=2, dtype=tf.dtypes.int32)
+        print(lbl.shape)
+        print(initV.shape)
+
         # [TODO TASK 4.2] fix the label in the label layer and run alternating Gibbs sampling in the top RBM. From the top RBM, drive the network \ 
         # top to the bottom visible layer (replace 'vis' from random to your generated visible layer).
 
-        for _ in range(self.n_gibbs_gener):
-            vis = np.random.rand(n_sample, self.sizes["vis"])
+        topRBM = self.rbm_stack['pen+lbl--top']
+        # v = f(initV)
+        v = tf.dtypes.cast(initV, dtype=tf.float32)
+        pv, v = self.propagateToFinalRBM(v)
+        v = tf.concat([v, lbl], axis=1)
 
-            records.append([ax.imshow(vis.reshape(self.image_size), cmap="bwr", vmin=0, vmax=1, animated=True,
-                                      interpolation=None)])
+        images = []
+        for i in range(self.n_gibbs_gener):
+            # for j in range(n_sample):
+            #     for k in range(10):
+            #        if v[j][-10 + k] != lbl[j][k]:
+            #            print("ERROR")
+            # print(v[0][-10:])
+            ph, h = topRBM.get_h_given_v(v)
+            pv, v = topRBM.get_v_given_h(h)
 
-        anim = stitch_video(fig, records).save("%s.generate%d.mp4" % (name, np.argmax(true_lbl)))
+            print("Mean v in Gibbs sample:", np.mean(v))
+
+            v = tf.concat([v[:, :-10], lbl], axis=1)
+            '''
+            for d in range(n_sample):
+                for j in range(10):
+                    v[d][-10 + j].assign(lbl[d][j])
+            '''
+            visP, vis = self.propagateFromFinalRBM(v[:, :-10])
+            images.append(vis)
+
+            # records.append([ax.imshow(vis.reshape((28, 28)), cmap="bwr", vmin=0, vmax=1, animated=True,
+            #                           interpolation=None)])
+
+        print("Generating:", np.argmax(lbl[imageToShow]))
+        # ANIMATION DID NOT WORK ON MY COMPUTER => YOLO
+        for i in range(0, len(images), 20):
+            imgToShow = images[i][imageToShow]
+            plt.imshow(imgToShow.numpy().reshape((28, 28)), cmap="bwr", vmin=0, vmax=1, animated=True,
+                       interpolation=None)
+            plt.show()
+
+        # anim = stitch_video(fig, records).save("%s.generate%d.mp4" % (name, np.argmax(true_lbl)))
+        # plt.imshow(records[-1])
 
     def train_greedylayerwise(self, vis_trainset, lbl_trainset, n_iterations):
         f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
@@ -135,6 +188,7 @@ class DeepBeliefNet(tf.keras.Model):
         """ 
         CD-1 training for pen+lbl--top 
         """
+        self.preTrainFinalLayer(f(vis_trainset), lbl_trainset, n_iterations)
 
     def propagateToFinalRBM(self, inData):
         ph0, h0 = self.rbm_stack['vis--hid'].get_h_given_v(inData)
@@ -144,11 +198,19 @@ class DeepBeliefNet(tf.keras.Model):
         pv1, v1 = self.rbm_stack['hid--pen'].get_v_given_h(data)
         return self.rbm_stack['vis--hid'].get_v_given_h(v1)
 
-    def preTrainFinalLayer(self, inData, labels, finalRBM, numIterations):
-        #TODO use PropagateToFinalRBM function to generate data for final layer, than extend with the labels
-        # Then perform gibbs on final. REMEBER to re-propagate the data every iteration
-        pass
+    def preTrainFinalLayer(self, inData, labels, numIterations):
+        # TODO use PropagateToFinalRBM function to generate data for final layer, than extend with the labels
+        # Then perform gibbs on final. REMEMBER to re-propagate the data every iteration
+        topRBM = self.rbm_stack['pen+lbl--top']
+        for epoch in range(numIterations):
+            # prop and concatenate "new dataset" each epoch
+            pv, v = self.propagateToFinalRBM(inData)
+            v = tf.concat([v, labels], axis=1)
 
+            topRBM.cd1(v, numEpochs=1)
+            self.recognize(inData[0:1000], labels[0:1000])
+
+        topRBM.save_weights("DBN-RBM-2-Weights")
 
     def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations):
 

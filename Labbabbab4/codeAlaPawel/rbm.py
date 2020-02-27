@@ -159,13 +159,13 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.bias_h.assign_add(self.delta_bias_h * lr)
 
     # @tf.function
-    def get_h_given_v(self, betch):
+    def get_h_given_v(self, batch):
         if (self.hasUntwinedWeights):
-            res = tf.matmul(betch, self.weight_h_to_v) + self.bias_h
+            res = tf.matmul(batch, self.weight_h_to_v) + self.bias_h
             probs = sigmoid(res)
             return probs, sample_binary(probs)
         else:
-            res = tf.matmul(betch, self.weight_vh) + self.bias_h
+            res = tf.matmul(batch, self.weight_vh) + self.bias_h
             probs = sigmoid(res)
             return probs, sample_binary(probs)
 
@@ -177,8 +177,22 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
             return probs, sample_binary(probs)
         else:
             res = tf.matmul(hidden_minibatch, tf.transpose(self.weight_vh)) + self.bias_v
-            probs = sigmoid(res)
-            return probs, sample_binary(probs)
+            if self.is_top:
+                N = len(hidden_minibatch)
+
+                probsSM = tf.nn.softmax(res[:, -10:])
+                probsRest = sigmoid(res[:, :-10])
+                probs = tf.concat([probsRest, probsSM], axis=1)
+
+                argMax = tf.reshape(tf.argmax(probsSM, axis=1), (1, N))
+                samplesSM = tf.one_hot(argMax[0], 10)
+                samplesRest = sample_binary(probsRest)
+                samples = tf.concat([samplesRest, samplesSM], axis=1)
+            else:
+                probs = sigmoid(res)
+                samples = sample_binary(probs)
+
+            return probs, samples
 
     def untwine_weights(self):
         self.weight_v_to_h.assign(self.weight_vh)
@@ -186,6 +200,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.hasUntwinedWeights.assign(True)
         # self.weight_vh = None
 
+    '''
     def get_h_given_v_dir(self, visible_minibatch):
 
         """Compute probabilities p(h|v) and activations h ~ p(h|v)
@@ -246,6 +261,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
             pass
 
         return np.zeros((n_samples, self.ndim_visible)), np.zeros((n_samples, self.ndim_visible))
+    '''
 
     def update_generate_params(self, inps, trgs, preds):
 
