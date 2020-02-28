@@ -193,7 +193,7 @@ class DeepBeliefNet(tf.keras.Model):
             topRBM.cd1(v, numEpochs=1)
             # self.recognize(inData[0:1000], labels[0:1000])
 
-    def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations, numGibbsIterations):
+    def train_wakesleep_finetune(self, vis_trainset, lbl_trainset, n_iterations, numGibbsIterations, testImgs, testLabels):
 
         """
         Wake-sleep method for learning all the parameters of network.
@@ -209,8 +209,8 @@ class DeepBeliefNet(tf.keras.Model):
         print(rbm0.weight_v_to_h)
         rbm1 = self.rbm_stack['hid--pen']
         rbm2 = self.rbm_stack['pen+lbl--top']
-        trainingSetParts = rbm0.divideIntoParts(vis_trainset, 10000)
-        labelParts = rbm0.divideIntoParts(lbl_trainset, 10000)
+        trainingSetParts = rbm0.divideIntoParts(vis_trainset, 500)
+        labelParts = rbm0.divideIntoParts(lbl_trainset, 500)
 
         for it in range(n_iterations):
             print("Iteration: ", it)
@@ -271,7 +271,7 @@ class DeepBeliefNet(tf.keras.Model):
             rbm1.applyGenerativeDeltas(rbm1Deltas[0])
             '''
 
-            self.recognize(vis_trainset, lbl_trainset)
+            self.recognize(testImgs, testLabels)
             # [TODO TASK 4.3] wake-phase : drive the network bottom to top using fixing the visible and label data.
 
             # [TODO TASK 4.3] alternating Gibbs sampling in the top RBM for k='n_gibbs_wakesleep' steps, also store neccessary information for learning this RBM.

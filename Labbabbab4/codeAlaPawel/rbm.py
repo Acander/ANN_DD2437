@@ -286,8 +286,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         # print("DeltaW:", deltaW.shape)
 
         # print(self.delta_bias_v.shape)
-        # lr = self.learning_rate
-        lr = 0.01
+        lr = self.learning_rate
         self.delta_weight_h_to_v.assign_add(deltaW * lr)
         self.delta_bias_v.assign_add(tf.reduce_mean(deltaActv, axis=0) * lr)
 
@@ -319,6 +318,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         deltaActvs = tf.reduce_mean(tf.convert_to_tensor(deltaActvs), axis=0)
 
         lr = self.learning_rate
+        #lr = 0.1
         self.delta_weight_h_to_v.assign_add(deltaW * lr)
         self.delta_bias_v.assign_add(deltaActvs * lr)
 

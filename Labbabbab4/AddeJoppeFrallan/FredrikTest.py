@@ -13,6 +13,6 @@ def main():
 
     # dbn.generate(test_lbls[0:1], "lol")
     # dbn.loadAllWeights("FineTunedWeights-RBN-{}")
-    #dbn.train_wakesleep_finetune(train_imgs, train_lbls, 50, 80)
+    dbn.train_wakesleep_finetune(train_imgs, train_lbls, 10, 20, test_imgs, test_lbls)
     # dbn.saveAllWeights("FineTunedWeights-RBN-{}")
     # dbn.generate(test_lbls[0:1], "lol2")
