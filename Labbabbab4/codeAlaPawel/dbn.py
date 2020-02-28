@@ -295,9 +295,11 @@ class DeepBeliefNet(tf.keras.Model):
         #    return
         baseDir = "Labbabbab4/AddeJoppeFrallan/"
 
+        '''
         self.rbm_stack['vis--hid'].fixDeltaWeights()
         self.rbm_stack['hid--pen'].fixDeltaWeights()
         self.rbm_stack['pen+lbl--top'].fixDeltaWeights()
+        '''
 
         if (trainingStep > 0):
             print("Loading RBN-Layer-0 Weights")
@@ -310,10 +312,12 @@ class DeepBeliefNet(tf.keras.Model):
             print("Loading RBN-Layer-2 Weights")
             self.rbm_stack['pen+lbl--top'].load_weights(baseDir + "DBN-RBM-2-Weights")
 
+        '''
         self.rbm_stack['vis--hid'].fixDeltaWeights()
         self.rbm_stack['hid--pen'].fixDeltaWeights()
         self.rbm_stack['pen+lbl--top'].fixDeltaWeights()
         # Fixing previous bug
+        '''
 
     def saveAllWeights(self, baseFileName):
         keys = ['vis--hid', 'hid--pen', 'pen+lbl--top']

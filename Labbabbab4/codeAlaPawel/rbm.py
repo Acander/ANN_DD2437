@@ -3,7 +3,7 @@ import os
 # os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   # see issue #152
 from Labbabbab4.AddeJoppeFrallan import UtilsEgen
 
-#os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
+# os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 
 from Labbabbab4.codeAlaPawel.util import *
 import tensorflow as tf
@@ -41,9 +41,9 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
 
         f = lambda x: tf.convert_to_tensor(x, dtype=tf.float32)
         g = lambda x, n: tf.Variable(f(x), name=n)
-        self.delta_bias_v = g(0, "delta_bias_v")
-        self.delta_bias_h = g(0, "delta_bias_h")
-        self.delta_weight_vh = g(0, "delta_weight_vh")
+        self.delta_bias_v = g(np.zeros(self.ndim_visible), "delta_bias_v")
+        self.delta_bias_h = g(np.zeros(self.ndim_hidden), "delta_bias_h")
+        self.delta_weight_vh = g(np.zeros((self.ndim_visible, self.ndim_hidden)), "delta_weight_vh")
 
         self.bias_v = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_visible)), "bias_v")
         self.bias_h = g(np.random.normal(loc=0.0, scale=0.01, size=(self.ndim_hidden)), "bias_h")
@@ -92,9 +92,9 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         """
         print("learning CD1")
 
-        trainingSetParts = self.divideIntoParts(visible_trainset, 250)
+        trainingSetParts = self.divideIntoParts(visible_trainset, 1000)
         if (len(testSet) != 0):
-            testSetParts = self.divideIntoParts(testSet, 250)
+            testSetParts = self.divideIntoParts(testSet, 1000)
         print("Number of parts:", len(trainingSetParts))
 
         if (len(testSet) != 0):
@@ -150,8 +150,8 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         meanDeltaBiasV = tf.reduce_mean(v_0 - v_k, axis=0)
         meanDeltaBiasH = tf.reduce_mean(h_0 - h_k, axis=0)
 
-        #print(meanDeltaBiasV)
-        lr = self.learning_rate / len(v_0)
+        # print(meanDeltaBiasV)
+        lr = self.learning_rate
         self.delta_bias_v = self.delta_bias_v * self.momentum + (1 - self.momentum) * meanDeltaBiasV
         self.delta_bias_h = self.delta_bias_h * self.momentum + (1 - self.momentum) * meanDeltaBiasH
         self.delta_weight_vh = self.delta_weight_vh * self.momentum + (1 - self.momentum) * meanDeltaWeights
@@ -286,7 +286,7 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         # print("DeltaW:", deltaW.shape)
 
         # print(self.delta_bias_v.shape)
-        #lr = self.learning_rate
+        # lr = self.learning_rate
         lr = 0.01
         self.delta_weight_h_to_v.assign_add(deltaW * lr)
         self.delta_bias_v.assign_add(tf.reduce_mean(deltaActv, axis=0) * lr)
@@ -325,7 +325,6 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         self.weight_h_to_v = self.weight_h_to_v + self.delta_weight_h_to_v
         self.bias_v = self.bias_v + self.delta_bias_v
 
-
     def update_recognize_params(self, inps, trgs, preds):
 
         """Update recognition weight "weight_v_to_h" and bias "bias_h"
@@ -349,9 +348,9 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
         deltaW = tf.reduce_mean(deltaW, axis=0)
         # print("DeltaW:", deltaW.shape)
 
-        #lr = self.learning_rate
+        # lr = self.learning_rate
         lr = 0.01
-        #print(lr)
+        # print(lr)
         self.delta_weight_v_to_h.assign_add(tf.transpose(deltaW) * lr)
         self.delta_bias_h.assign_add(tf.reduce_mean(deltaActv, axis=0) * lr)
 
