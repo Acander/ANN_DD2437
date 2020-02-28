@@ -80,10 +80,14 @@ class DeepBeliefNet(tf.keras.Model):
             pv, v = topRBM.get_v_given_h(h)
 
         # predicted_lbl = np.zeros(true_lbl.shape)
+        predicted_lbl = tf.argmax(pv[:, -10:], axis=1)
         lblNeurons = v[:, -10:].numpy()
-        predicted_lbl = lblNeurons
+        # print(predicted_lbl.shape)
+        # print(predicted_lbl)
+        # predicted_lbl = lblNeurons
         # predicted_lbl = np.argmax(lblNeurons, axis=1)
-        print("accuracy = %.2f%%" % (100. * np.mean(np.argmax(predicted_lbl, axis=1) == np.argmax(true_lbl, axis=1))))
+        # print("accuracy = %.2f%%" % (100. * np.mean(np.argmax(predicted_lbl, axis=1) == np.argmax(true_lbl, axis=1))))
+        print("accuracy = %.2f%%" % (100. * np.mean(predicted_lbl == np.argmax(true_lbl, axis=1))))
 
     # Generates images for all passed in, but shows only the one specified in argument. NICE
     def generate(self, true_lbl, name, imageToShow=0):
@@ -293,7 +297,8 @@ class DeepBeliefNet(tf.keras.Model):
         # if (trainingStep <= 0):
         #    print("Pre-loading nothing")
         #    return
-        baseDir = "Labbabbab4/AddeJoppeFrallan/"
+        # baseDir = "Labbabbab4/AddeJoppeFrallan/"
+        baseDir = ""
 
         '''
         self.rbm_stack['vis--hid'].fixDeltaWeights()

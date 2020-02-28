@@ -186,8 +186,12 @@ class RestrictedBoltzmannMachine(tf.keras.Model):
                 probsRest = sigmoid(res[:, :-10])
                 probs = tf.concat([probsRest, probsSM], axis=1)
 
-                argMax = tf.reshape(tf.argmax(probsSM, axis=1), (1, N))
-                samplesSM = tf.one_hot(argMax[0], 10)
+                # argMax = tf.reshape(tf.argmax(probsSM, axis=1), (1, N))
+                # samplesSM = tf.one_hot(argMax[0], 10)
+
+                # sample_categorical()
+                cat = tf.random.categorical(tf.math.log(probsSM), 1)
+                samplesSM = tf.squeeze(tf.one_hot(cat, 10))
                 samplesRest = sample_binary(probsRest)
                 samples = tf.concat([samplesRest, samplesSM], axis=1)
             else:
